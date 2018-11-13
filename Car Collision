@@ -1,0 +1,10 @@
+public boolean checkCarCollide(Node person){
+			boolean collide=false;
+			for(int i=0;i<=cars.size();i++){
+				//checks the bounds for both the person and every car
+				if(person.getBoundsInParent().intersects(cars.get(i).getBoundsInParent())){
+					collide=true;
+				}
+			}
+			return collide;
+	}
