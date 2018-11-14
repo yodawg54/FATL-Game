@@ -81,6 +81,11 @@ public class Game extends Application{
     	
     }
 	
+	private void sendToBeginning(ImageView imgToMove) {
+		imgToMove.setTranslateY(350);
+		imgToMove.setTranslateX(100);
+	}
+	
 	private void onUpdate(){
 		for (Node car: cars)
 			car.setTranslateX(car.getTranslateX() - Math.random()*10);
@@ -160,6 +165,9 @@ public class Game extends Application{
         //this works!!!
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
+        	case R:
+        		sendToBeginning(bcar); //For testing, R = "reset"
+        		break;
         	case W:
         	case UP:
         		bcar.setTranslateY(bcar.getTranslateY() - 10);
