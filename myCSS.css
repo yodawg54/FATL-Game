@@ -1,6 +1,6 @@
 #pane{
     -fx-background-image: url("FATL.png");
     -fx-background-repeat: stretch;
-    -fx-background-size: 300 400;
+    -fx-background-size: 600 800;
     -fx-background-position: center center;
 }

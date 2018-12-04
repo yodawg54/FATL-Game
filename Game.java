@@ -37,9 +37,8 @@ public class Game extends Application{
 	int y = 0;
 	private StackPane root;
 	private List<Node> cars = new ArrayList<>();
-	private Node person;
 	private Scene scene;
-	ImageView bcar;
+	ImageView person;
 	private AnimationTimer timer;
 	
 	//http://tutorials.jenkov.com/javafx/button.html
@@ -74,21 +73,39 @@ public class Game extends Application{
         nCar.setCache(true); //improves performance
         
         //nCar.setTranslateY((int)(Math.random() * -55));
-        nCar.setTranslateY(-30); //need to find good bounds for this
-        nCar.setTranslateX(110);
+        
+        //Code to determine which lane the car gets spawned in
+        double carPlacement = Math.random();
+        if (carPlacement < .25) {
+        	nCar.setTranslateY(-110);
+            nCar.setTranslateX(110);
+        }
+        else if (carPlacement < .5) {
+        	nCar.setTranslateY(-30);
+            nCar.setTranslateX(110);
+        }
+        else if (carPlacement < .75) {
+        	nCar.setTranslateY(-155);
+            nCar.setTranslateX(110);
+        }
+        else {
+        	nCar.setTranslateY(22);
+            nCar.setTranslateX(110);
+        }
         root.getChildren().add(nCar);
         return nCar;
     	
     }
 	
-	private void sendToBeginning(ImageView imgToMove) {
-		imgToMove.setTranslateY(350);
-		imgToMove.setTranslateX(100);
+	private void sendToBeginning(ImageView toMove) {
+		toMove.setTranslateY(350);
+		toMove.setTranslateX(100);
 	}
 	
 	private void onUpdate(){
+		
 		for (Node car: cars)
-			car.setTranslateX(car.getTranslateX() - Math.random()*10);
+			car.setTranslateX(car.getTranslateX() - Math.random() * 10);
 		
 		if (Math.random() < 0.015){
 			cars.add(spawnCar());
@@ -100,8 +117,9 @@ public class Game extends Application{
 	private void checkState(){
 		for (Node car: cars){
 			if(car.getBoundsInParent().intersects(person.getBoundsInParent())){
-				person.setTranslateX(0);
-				person.setTranslateY(500);
+				sendToBeginning(person);
+				//person.setTranslateX(0);
+				//person.setTranslateY(500);
 			}
 		}
 		
@@ -135,7 +153,7 @@ public class Game extends Application{
 		//btn = new Button("Click it!");
 		root = new StackPane();
         root.setId("pane");
-        scene = new Scene(root, 300, 400);
+        scene = new Scene(root, 600, 800);
         scene.getStylesheets().addAll(this.getClass().getResource("myCSS.css").toExternalForm());
 		game.setScene(scene);
         game.setTitle("The Official Bridgewater Video Game - FATL");
@@ -147,17 +165,26 @@ public class Game extends Application{
         	}
         };
         timer.start();
-
-        Image car = new Image("blueCar.png"); //Grabbing the image from bin, setting it to a variable
-        bcar = new ImageView(); //Creating a way to view an image - ImageView
-        bcar.setImage(car); //Setting the image to ImageView so it can be viewer
-        bcar.setFitWidth(100); //resizes image
-        bcar.setPreserveRatio(true); //preserves ratio
-        bcar.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
-        bcar.setCache(true); //improves performance
+        
+        boolean genderSelected = true; // DEBUG, will be replaced in character select menu
+        Image galImage = new Image("bridgewaterGal.png");
+        Image guyImage = new Image("bridgewaterGuy.png");
+        Image chosenImage;
+        if (genderSelected == true) {
+        	chosenImage = guyImage;
+        }
+        else {
+        	chosenImage = galImage;
+        }
+        person = new ImageView(); //Creating a way to view an image - ImageView
+        person.setImage(chosenImage); //Setting the image to ImageView so it can be viewer
+        person.setFitWidth(75); //resizes image
+        person.setPreserveRatio(true); //preserves ratio
+        person.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
+        person.setCache(true); //improves performance
         
         HBox hbox1 = new HBox(); //A Horizontal Box (Basically a row for grouping)
-        hbox1.getChildren().add(bcar); //Adding the image view as a child to the box
+        hbox1.getChildren().add(person); //Adding the image view as a child to the box
         root.getChildren().add(hbox1); //Needed to actually see on scene, adding the box as a child to the root
 	
         
@@ -166,23 +193,31 @@ public class Game extends Application{
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
         	case R:
-        		sendToBeginning(bcar); //For testing, R = "reset"
+        		sendToBeginning(person); //For testing, R = "reset"
         		break;
         	case W:
         	case UP:
-        		bcar.setTranslateY(bcar.getTranslateY() - 10);
+        		if (person.getTranslateY() >= 0) {
+        			person.setTranslateY(person.getTranslateY() - 80);
+        		}
         		break;
         	case S:
         	case DOWN:
-        		bcar.setTranslateY(bcar.getTranslateY() + 10);
+        		if (person.getTranslateY() < 700) {
+        			person.setTranslateY(person.getTranslateY() + 80);
+        		}
         		break;
         	case A:
         	case LEFT:
-        		bcar.setTranslateX(bcar.getTranslateX() - 10);
+        		if (person.getTranslateX() >= 0) {
+        			person.setTranslateX(person.getTranslateX() - 80);
+        		}
         		break;
         	case D:
         	case RIGHT:
-        		bcar.setTranslateX(bcar.getTranslateX() + 10);
+        		if (person.getTranslateX() < 510) {
+        			person.setTranslateX(person.getTranslateX() + 80);
+        		}
         	}
         });
         
