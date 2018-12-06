@@ -1,0 +1,81 @@
+	//All Images *************************************************************************************************
+        
+        //Bridgewater Guy
+        Image bridgewaterGuy = new Image("BridgewaterGuy.png"); //Grabbing the image from bin, setting it to a variable
+        ImageView bGuyView = new ImageView(); 					//Creating a way to view an image - ImageView
+        bGuyView.setImage(bridgewaterGuy);						//Setting the image to ImageView so it can be viewed
+        
+        //Bridgewater Gal
+        Image bridgewaterGal = new Image("BridgewaterGal.png");
+        ImageView bGalView = new ImageView();
+        bGalView.setImage(bridgewaterGal);	
+        
+        //Alligator
+        Image alligator = new Image("Alligator.png");
+        ImageView alligatorView = new ImageView();
+        alligatorView.setImage(alligator);	
+        
+        //Log
+        Image log = new Image("Log.png");
+        ImageView logView = new ImageView();
+        logView.setImage(log);	
+        
+        //BC Coin
+        Image coin = new Image("BC_Coin.png");
+        ImageView coinView = new ImageView();
+        coinView.setImage(coin);	
+        
+        //Ernie
+        Image ernie = new Image("Ernie.png");
+        ImageView ernieView = new ImageView();
+        ernieView.setImage(ernie);	
+        
+        //Green Car
+        Image gCar = new Image("GreenCar.png");
+        ImageView gCarView = new ImageView();
+        gCarView.setImage(gCar);	
+        
+        //Red Car
+        Image rCar = new Image("RedCar.png");
+        ImageView rCarView = new ImageView();
+        rCarView.setImage(rCar);	
+        
+        //Blue Car
+        Image bCar = new Image("BlueCar.png");
+        ImageView bCarView = new ImageView();
+        bCarView.setImage(bCar);	
+        
+        //Yellow Car
+        Image yCar = new Image("YellowCar.png");
+        ImageView yCarView = new ImageView();
+        yCarView.setImage(yCar);	
+        
+        //Flory
+        Image flory = new Image("Flory.png");
+        ImageView floryView = new ImageView();
+        floryView.setImage(flory);	
+        
+        //McKinney
+        Image mcKinney = new Image("McKinney.png");
+        ImageView mcKinneyView = new ImageView();
+        mcKinneyView.setImage(mcKinney);	
+        
+        //Memorial
+        Image memorial = new Image("Memorial.png");
+        ImageView memorialView = new ImageView();
+        memorialView.setImage(memorial);	
+        
+        //Nininger
+        Image nininger = new Image("Nininger.png");
+        ImageView niningerView = new ImageView();
+        niningerView.setImage(nininger);	
+        
+        //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+	HBox buildingHBox = new HBox(28); //Spacing of 28 between images
+        buildingHBox.getChildren().add(niningerView);
+        buildingHBox.getChildren().add(memorialView);
+        buildingHBox.getChildren().add(mcKinneyView);
+        buildingHBox.getChildren().add(floryView);
+        //Missing 5th building
+        root.getChildren().add(buildingHBox);
