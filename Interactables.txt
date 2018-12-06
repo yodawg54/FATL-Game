@@ -1,0 +1,16 @@
+	//Adding Ernie to map
+        VBox vBox1 = new VBox();
+        vBox1.setPadding(new Insets(235,0,0,0)); //Padding so they don't sit at y = 0
+        vBox1.getChildren().add(ernieView);
+        
+        //Adding BC_Coin to map
+        VBox vBox2 = new VBox();
+        vBox2.setPadding(new Insets(120,0,0,0)); 
+        vBox2.getChildren().add(coinView);
+		
+        //Box to use as a grid for Ernie and coin
+        HBox spacingHBox = new HBox(190);
+        spacingHBox.getChildren().add(vBox1);
+        spacingHBox.getChildren().add(vBox2);
+        root.getChildren().add(spacingHBox);
+        
