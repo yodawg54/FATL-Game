@@ -3,9 +3,20 @@ import javafx.geometry.Insets;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
+
+//For midi playing
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MetaEventListener;
+import javax.sound.midi.MetaMessage;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.Sequencer;
 
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
@@ -18,6 +29,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -36,8 +49,8 @@ public class Game extends Application{
 	private Scene scene;
 	//ImageView bcar;
 	private AnimationTimer timer;
-	private boolean CRASH = false;
-	private boolean WIN = false;
+	private boolean CRASH = true;
+	private boolean WIN = true;
 	private boolean SWAP = true;
 	
 	//http://tutorials.jenkov.com/javafx/button.html
@@ -184,15 +197,18 @@ public class Game extends Application{
 		//return collide;
 	}
 	
-	public boolean checkWin(ImageView person, HBox buildings){
-		boolean w = false;
-		for(int i=0; i<buildings.getChildren().size(); i++){
-			if(person.intersects(buildings.getBoundsInParent())){
-				w = true;
-			}
+	// A win is defined as reaching the top of the play field
+	public void checkWin(ImageView person, MediaPlayer player){
+		if (person.getTranslateY() < 10) {
+			sendPlayerToBeginning(person);
+			player.seek(Duration.ZERO); // Resets the media player
+			player.play();
 		}
-		
-		return w;	
+	}
+	
+	public void sendPlayerToBeginning(ImageView person) {
+		person.setTranslateX(275);
+		person.setTranslateY(740);
 	}
 	
 	
@@ -226,7 +242,9 @@ public class Game extends Application{
 		}
 	}*/
 	
-	
+	public void randomizeCoin(ImageView coin) {
+		
+	}
 	
 	@Override
 	public void start(Stage game) throws Exception{
@@ -235,10 +253,14 @@ public class Game extends Application{
 		
 		root = new StackPane();
         root.setId("pane");
-        scene = new Scene(root, 300, 400);
+        scene = new Scene(root, 600, 800);
         scene.getStylesheets().addAll(this.getClass().getResource("myCSS.css").toExternalForm());
 		game.setScene(scene);
         game.setTitle("The Official Bridgewater Video Game - FATL");
+        
+        // Sound
+        Media fightSong = new Media(new File("BCFightSong.mp3").toURI().toString());
+        MediaPlayer player = new MediaPlayer(fightSong);
         
         timer = new AnimationTimer(){
         	@Override
@@ -255,8 +277,7 @@ public class Game extends Application{
         person.setPreserveRatio(true); //preserves ratio
         person.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
         person.setCache(true); //improves performance
-        person.setTranslateX(125);
-        person.setTranslateY(350);
+        sendPlayerToBeginning(person);
         
         HBox hbox1 = new HBox(); //A Horizontal Box (Basically a row for grouping)
         hbox1.getChildren().add(person); //Adding the image view as a child to the box
@@ -334,7 +355,7 @@ public class Game extends Application{
         
         //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-        HBox buildingHBox = new HBox(28); //Spacing of 28 between images
+        HBox buildingHBox = new HBox(125); //Spacing of 75 between images
         buildingHBox.getChildren().add(niningerView);
         buildingHBox.getChildren().add(memorialView);
         buildingHBox.getChildren().add(mcKinneyView);
@@ -357,31 +378,38 @@ public class Game extends Application{
         spacingHBox.getChildren().add(vBox1);
         spacingHBox.getChildren().add(vBox2);
         root.getChildren().add(spacingHBox);
-	
-        
         
         //this works!!!
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
         	case W:
         	case UP:
-        		person.setTranslateY(person.getTranslateY() - 10);
-        		checkCarCollide(person);
+        		if (person.getTranslateY() > 0) {
+        			person.setTranslateY(person.getTranslateY() - 10);
+        			checkCarCollide(person);
+        			checkWin(person, player);
+        		}
         		break;
         	case S:
         	case DOWN:
-        		person.setTranslateY(person.getTranslateY() + 10);
-        		checkCarCollide(person);
+        		if (person.getTranslateY() < 740) {
+        			person.setTranslateY(person.getTranslateY() + 10);
+        			checkCarCollide(person);
+        		}
         		break;
         	case A:
         	case LEFT:
-        		person.setTranslateX(person.getTranslateX() - 10);
-        		checkCarCollide(person);
+        		if (person.getTranslateX() > 0) {
+        			person.setTranslateX(person.getTranslateX() - 10);
+        			checkCarCollide(person);
+        		}
         		break;
         	case D:
         	case RIGHT:
-        		person.setTranslateX(person.getTranslateX() + 10);
-        		checkCarCollide(person);
+        		if (person.getTranslateX() < 550) {
+        			person.setTranslateX(person.getTranslateX() + 10);
+        			checkCarCollide(person);
+        		}
 			default:
 				break;
         	}
