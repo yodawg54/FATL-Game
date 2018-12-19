@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 //For midi playing
 import javax.sound.midi.InvalidMidiDataException;
@@ -41,7 +42,6 @@ public class Game extends Application{
 	//Color c = Color.rgb(244, 217, 66); //gold color
 	//int x = 0;
 	//int y = 0;
-	int val = 0;
 	private StackPane root;
 	private List<Node> cars = new ArrayList<>(); //nodes of cars
 	private List<Node> logs = new ArrayList<>(); //nodes of logs
@@ -75,50 +75,61 @@ public class Game extends Application{
 	
 	
 	private ImageView spawnCar(){
-    	//Image blueCar = new Image("blueCar.png");//Grabbing the image from bin, setting it to a variable
-    	//Image greenCar = new Image("GreenCar.png");
-    	//Image yellowCar = new Image("YellowCar.png");
-    	//Image redCar = new Image("RedCar.png");
     	Image[] images = new Image[4];
     	images[0] = new Image("blueCar.png");
     	images[1] = new Image("GreenCar.png");
     	images[2] = new Image("YellowCar.png");
     	images[3] = new Image("RedCar.png");
     	
-    	
-    	if(val==4){val = 0;} //going through array to get different color cars
+    	Random rand = new java.util.Random();
     	
         ImageView nCar = new ImageView();
-        nCar.setImage(images[val]); //Creating a way to view an image - ImageView
-        val++; //resetting array if over
-        //System.out.println("Val=" + val);
-        //nCar.setImage(newCar); //Setting the image to ImageView so it can be viewer
+        nCar.setImage(images[rand.nextInt(4)]); //Creating a way to view an image - ImageView
         nCar.setFitWidth(100); //resizes image
         nCar.setPreserveRatio(true); //preserves ratio
         nCar.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
         nCar.setCache(true); //improves performance
         
-        int[] y = {-30, 20};
-		int i = 0;
-		if(SWAP == true){
-			i = 1;
-			//SWAP = false;
-		}
-		else{
-			i=0;
-			//SWAP = true;
-		}
-	
+        int lane = rand.nextInt(4);
         
-        //nCar.setTranslateY((int)(Math.random() * -55));
-        nCar.setTranslateY(y[i]); //need to find good bounds for this
-        nCar.setTranslateX(110);
+        if(lane == 0) {
+        	nCar.setTranslateY(-300);
+        }
+        else if(lane == 1) {
+        	nCar.setTranslateY(-215);
+        }
+        else if(lane == 2) {
+        	nCar.setTranslateY(-60);
+        }
+        else {
+        	nCar.setTranslateY(50);
+        }
+        nCar.setTranslateX(500);
+        
+        //Car Horn
+        if(rand.nextInt(5) < 1) {
+        	playRandomCarHorn();
+        }
+        
         root.getChildren().add(nCar);
-        //System.out.println("Spawn car method");
         return nCar;
-    	
     }
 	
+	private void playRandomCarHorn() {
+		double rand = Math.random();
+		if (rand < 0.5) {
+			Media carHorn = new Media(new File("carHorn.mp3").toURI().toString());
+	        MediaPlayer carHornPlayer = new MediaPlayer(carHorn);
+	        carHornPlayer.setVolume(.3);
+	        carHornPlayer.play();
+		}
+		else {
+			Media carHorn1 = new Media(new File("carHorn1.mp3").toURI().toString());
+	        MediaPlayer carHornPlayer1 = new MediaPlayer(carHorn1);
+	        carHornPlayer1.setVolume(.3);
+	        carHornPlayer1.play();
+		}
+	}
 	
 	private ImageView spawnLog(){
 		Image newLog = new Image("log.png");
@@ -129,26 +140,30 @@ public class Game extends Application{
 		log.setSmooth(true);
 		log.setCache(true);
 		
-		int[] y = {140, 100};
-		int i = 0;
-		if(SWAP == true){
-			i = 1;
-			SWAP = false;
-		}
-		else{
-			i=0;
-			SWAP = true;
-		}
+		Random rand = new java.util.Random();
+		int lane = rand.nextInt(4);
+        
+        if(lane == 0) {
+        	log.setTranslateY(165);
+        }
+        else if(lane == 1) {
+        	log.setTranslateY(215);
+        }
+        else if(lane == 2) {
+        	log.setTranslateY(265);
+        }
+        else {
+        	log.setTranslateY(315);
+        }
+        log.setTranslateX(500);
 		
-		log.setTranslateY(y[i]);
-		log.setTranslateX(110);
 		root.getChildren().add(log);
 		return log;
 	}
 	
 	private void onUpdate(){
 		for (Node car: cars){
-			car.setTranslateX(car.getTranslateX() - Math.random()*10);
+			car.setTranslateX(car.getTranslateX() - 5);
 		}
 		
 		if (Math.random() < 0.015){
@@ -162,7 +177,32 @@ public class Game extends Application{
 		}
 		
 		for (Node log: logs){
-			log.setTranslateX(log.getTranslateX() - Math.random()*12);
+			if (log.getTranslateY() == 165) {
+				log.setTranslateX(log.getTranslateX() - 1);
+			}
+			else if (log.getTranslateY() == 215) {
+				log.setTranslateX(log.getTranslateX() - 3);
+			}
+			else if (log.getTranslateY() == 265) {
+				log.setTranslateX(log.getTranslateX() - 2);
+			}
+			else {
+				log.setTranslateX(log.getTranslateX() - 3);
+			}
+		}
+		
+		//If person is on log, move them
+		if(person.getTranslateY() == 690) {
+			person.setTranslateX(person.getTranslateX() - 3);
+		}
+		if(person.getTranslateY() == 640) {
+			person.setTranslateX(person.getTranslateX() - 2);
+		}
+		if(person.getTranslateY() == 590) {
+			person.setTranslateX(person.getTranslateX() - 3);
+		}
+		if(person.getTranslateY() == 540) {
+			person.setTranslateX(person.getTranslateX() - 1);
 		}
 		
 		if (Math.random() < .02){
@@ -184,12 +224,12 @@ public class Game extends Application{
 		//System.out.println(CRASH);
 		//System.out.println("person x val: " + person.getTranslateX());
 		//System.out.println("person Y val: " + person.getTranslateY());
-		if(CRASH && (person.getTranslateY()>= 110 && person.getTranslateY()<=180)){
+		//if(CRASH && (person.getTranslateY()>= 110 && person.getTranslateY()<=180)){
 			//System.out.println(CRASH);
-			person.setTranslateX(125);
-			person.setTranslateY(350);
-			CRASH = false;
-		}
+			//person.setTranslateX(125);
+			//person.setTranslateY(350);
+			//CRASH = false;
+		//}
 		//nCar.setTranslateY(-30); //need to find good bounds for this
         //nCar.setTranslateX(110);
 		
@@ -257,10 +297,6 @@ public class Game extends Application{
         scene.getStylesheets().addAll(this.getClass().getResource("myCSS.css").toExternalForm());
 		game.setScene(scene);
         game.setTitle("The Official Bridgewater Video Game - FATL");
-        
-        // Sound
-        Media fightSong = new Media(new File("BCFightSong.mp3").toURI().toString());
-        MediaPlayer player = new MediaPlayer(fightSong);
         
         timer = new AnimationTimer(){
         	@Override
@@ -379,35 +415,41 @@ public class Game extends Application{
         spacingHBox.getChildren().add(vBox2);
         root.getChildren().add(spacingHBox);
         
+        //Sounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
+        Media fightSong = new Media(new File("BCFightSong.mp3").toURI().toString());
+        MediaPlayer fightSongPlayer = new MediaPlayer(fightSong);
+        
+        
         //this works!!!
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
         	case W:
         	case UP:
         		if (person.getTranslateY() > 0) {
-        			person.setTranslateY(person.getTranslateY() - 10);
+        			person.setTranslateY(person.getTranslateY() - 50);
         			checkCarCollide(person);
-        			checkWin(person, player);
+        			checkWin(person, fightSongPlayer);
         		}
         		break;
         	case S:
         	case DOWN:
         		if (person.getTranslateY() < 740) {
-        			person.setTranslateY(person.getTranslateY() + 10);
+        			person.setTranslateY(person.getTranslateY() + 50);
         			checkCarCollide(person);
         		}
         		break;
         	case A:
         	case LEFT:
         		if (person.getTranslateX() > 0) {
-        			person.setTranslateX(person.getTranslateX() - 10);
+        			person.setTranslateX(person.getTranslateX() - 50);
         			checkCarCollide(person);
         		}
         		break;
         	case D:
         	case RIGHT:
         		if (person.getTranslateX() < 550) {
-        			person.setTranslateX(person.getTranslateX() + 10);
+        			person.setTranslateX(person.getTranslateX() + 50);
         			checkCarCollide(person);
         		}
 			default:
