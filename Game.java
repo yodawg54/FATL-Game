@@ -52,6 +52,11 @@ public class Game extends Application{
 	private boolean CRASH = true;
 	private boolean WIN = true;
 	private boolean SWAP = true;
+	private boolean moveUp = false;
+	private boolean moveDown = false;
+	private boolean moveRight = false;
+	private boolean moveLeft = false;
+	int moveCount = 0;
 	
 	//http://tutorials.jenkov.com/javafx/button.html
 	//FileInputStream input = new FileInputStream("images/blueCar.png");
@@ -191,6 +196,33 @@ public class Game extends Application{
 			}
 		}
 		
+		//Person smooth movement
+		if(moveCount < 5) {
+			if(moveUp) {
+				person.setTranslateY(person.getTranslateY() - 10);
+				moveCount++;
+			}
+			else if(moveDown) {
+				person.setTranslateY(person.getTranslateY() + 10);
+				moveCount++;
+			}
+			else if(moveRight) {
+				person.setTranslateX(person.getTranslateX() + 10);
+				moveCount++;
+			}
+			else if(moveLeft) {
+				person.setTranslateX(person.getTranslateX() - 10);
+				moveCount++;
+			}
+		}
+		else {
+			moveCount = 0;
+			moveUp = false;
+			moveDown = false;
+			moveRight = false;
+			moveLeft = false;
+		}
+		
 		//If person is on log, move them
 		if(person.getTranslateY() == 690) {
 			person.setTranslateX(person.getTranslateX() - 3);
@@ -208,7 +240,22 @@ public class Game extends Application{
 		if (Math.random() < .02){
 			logs.add(spawnLog());
 		}
-			
+		
+		//Check for collisions
+		//if (checkCollisions(person, logs)) {
+		//	sendPlayerToBeginning(person);
+		//}
+	}
+	
+	public boolean checkCollisions(ImageView person, List<Node> objectsToCheck) {
+		for(Node object: objectsToCheck) {
+			if (person.getTranslateX() > object.getTranslateX() && person.getTranslateX() < object.getLayoutX()) {
+				if (person.getTranslateY() > object.getTranslateY() && person.getTranslateY() < object.getLayoutY()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	public void checkCarCollide(Node person){
@@ -247,6 +294,7 @@ public class Game extends Application{
 	}
 	
 	public void sendPlayerToBeginning(ImageView person) {
+		moveUp = false;
 		person.setTranslateX(275);
 		person.setTranslateY(740);
 	}
@@ -422,35 +470,34 @@ public class Game extends Application{
         
         
         //this works!!!
+        
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
         	case W:
         	case UP:
         		if (person.getTranslateY() > 0) {
-        			person.setTranslateY(person.getTranslateY() - 50);
-        			checkCarCollide(person);
+        			moveUp = true;
+        		}
+        		else {
         			checkWin(person, fightSongPlayer);
         		}
         		break;
         	case S:
         	case DOWN:
-        		if (person.getTranslateY() < 740) {
-        			person.setTranslateY(person.getTranslateY() + 50);
-        			checkCarCollide(person);
+        		if (person.getTranslateY() < 710) {
+        			moveDown = true;
         		}
         		break;
         	case A:
         	case LEFT:
         		if (person.getTranslateX() > 0) {
-        			person.setTranslateX(person.getTranslateX() - 50);
-        			checkCarCollide(person);
+        			moveLeft = true;
         		}
         		break;
         	case D:
         	case RIGHT:
-        		if (person.getTranslateX() < 550) {
-        			person.setTranslateX(person.getTranslateX() + 50);
-        			checkCarCollide(person);
+        		if (person.getTranslateX() < 540) {
+        			moveRight = true;
         		}
 			default:
 				break;
