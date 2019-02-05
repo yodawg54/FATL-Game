@@ -226,31 +226,53 @@ public class Game extends Application{
 		//If person is on log, move them
 		if(person.getTranslateY() == 690) {
 			person.setTranslateX(person.getTranslateX() - 3);
+			if (!checkLogCollision(person, logs)) {
+				sendPlayerToBeginning(person);
+			}
 		}
 		if(person.getTranslateY() == 640) {
 			person.setTranslateX(person.getTranslateX() - 2);
+			if (!checkLogCollision(person, logs)) {
+				sendPlayerToBeginning(person);
+			}
 		}
 		if(person.getTranslateY() == 590) {
 			person.setTranslateX(person.getTranslateX() - 3);
+			if (!checkLogCollision(person, logs)) {
+				sendPlayerToBeginning(person);
+			}
 		}
 		if(person.getTranslateY() == 540) {
 			person.setTranslateX(person.getTranslateX() - 1);
+			if (!checkLogCollision(person, logs)) {
+				sendPlayerToBeginning(person);
+			}
+		}
+		
+		if (checkCarCollisions(person, cars)) {
+			sendPlayerToBeginning(person);
 		}
 		
 		if (Math.random() < .02){
 			logs.add(spawnLog());
 		}
-		
-		//Check for collisions
-		//if (checkCollisions(person, logs)) {
-		//	sendPlayerToBeginning(person);
-		//}
 	}
 	
-	public boolean checkCollisions(ImageView person, List<Node> objectsToCheck) {
-		for(Node object: objectsToCheck) {
-			if (person.getTranslateX() > object.getTranslateX() && person.getTranslateX() < object.getLayoutX()) {
-				if (person.getTranslateY() > object.getTranslateY() && person.getTranslateY() < object.getLayoutY()) {
+	public boolean checkCarCollisions(ImageView person, List<Node> Cars) {
+		for(Node object: Cars) {
+			if (person.getTranslateX() > object.getTranslateX() + 220 && person.getTranslateX() < object.getTranslateX() + 300) {
+				if (person.getTranslateY() < object.getTranslateY() + 440 && person.getTranslateY() > object.getTranslateY() + 320) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean checkLogCollision(ImageView person, List<Node> Logs) {
+		for(Node object: Logs) {
+			if (person.getTranslateX() > object.getTranslateX() + 220 && person.getTranslateX() < object.getTranslateX() + 330) {
+				if (person.getTranslateY() < object.getTranslateY() + 410 && person.getTranslateY() > object.getTranslateY() + 350) {
 					return true;
 				}
 			}
