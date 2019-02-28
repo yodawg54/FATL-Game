@@ -2,6 +2,7 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import sun.security.util.Resources;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,21 +43,47 @@ public class Game extends Application{
 	//Color c = Color.rgb(244, 217, 66); //gold color
 	//int x = 0;
 	//int y = 0;
+	private final boolean DEBUG = true;
 	private StackPane root;
 	private List<Node> cars = new ArrayList<>(); //nodes of cars
 	private List<Node> logs = new ArrayList<>(); //nodes of logs
 	private ImageView person; //character
 	private Scene scene;
-	//ImageView bcar;
 	private AnimationTimer timer;
-	private boolean CRASH = true;
-	private boolean WIN = true;
-	private boolean SWAP = true;
+	//private boolean CRASH = true;
+	//private boolean WIN = true;
+	//private boolean SWAP = true;
 	private boolean moveUp = false;
 	private boolean moveDown = false;
 	private boolean moveRight = false;
 	private boolean moveLeft = false;
 	int moveCount = 0;
+	int lives;
+	int gameState;
+	
+	//Sound
+	MediaPlayer fightSongPlayer;
+	
+	// player lanes, must be divisible by MOVE_INCREMENT
+	final int START_LANE = 740;
+	final int RIVER_ONE = 690;
+	final int RIVER_TWO = 640;
+	final int RIVER_THREE = 590;
+	final int RIVER_FOUR = 540;
+	final int RIVER_ROAD_MEDIAN = 490;
+	final int ROAD_ONE_ONE = 450;
+	final int ROAD_ONE_TWO = 410;
+	final int ROAD_ONE_THREE = 360;
+	final int ROAD_ONE_FOUR = 320;
+	final int ROAD_ROAD_MEDIAN = 270;
+	final int ROAD_TWO_ONE = 230;
+	final int ROAD_TWO_TWO = 190;
+	final int ROAD_TWO_THREE = 150;
+	final int ROAD_TWO_FOUR = 110;
+	final int END_LANE = 50;
+	
+	//how far the player moves in one update loop
+	final int MOVE_INCREMENT = 10;
 	
 	//http://tutorials.jenkov.com/javafx/button.html
 	//FileInputStream input = new FileInputStream("images/blueCar.png");
@@ -149,13 +176,13 @@ public class Game extends Application{
 		int lane = rand.nextInt(4);
         
         if(lane == 0) {
-        	log.setTranslateY(165);
+        	log.setTranslateY(180);
         }
         else if(lane == 1) {
-        	log.setTranslateY(215);
+        	log.setTranslateY(225);
         }
         else if(lane == 2) {
-        	log.setTranslateY(265);
+        	log.setTranslateY(270);
         }
         else {
         	log.setTranslateY(315);
@@ -173,84 +200,83 @@ public class Game extends Application{
 		
 		if (Math.random() < 0.015){
 			cars.add(spawnCar());
-			CRASH = true;
 			checkCarCollide(this.person);
 			//System.out.println("update method");
 		}
-		else{
-			CRASH = false;
-		}
 		
 		for (Node log: logs){
-			if (log.getTranslateY() == 165) {
+			if (log.getTranslateY() == 180) {
 				log.setTranslateX(log.getTranslateX() - 1);
 			}
-			else if (log.getTranslateY() == 215) {
+			else if (log.getTranslateY() == 225) {
 				log.setTranslateX(log.getTranslateX() - 3);
 			}
-			else if (log.getTranslateY() == 265) {
+			else if (log.getTranslateY() == 270) {
 				log.setTranslateX(log.getTranslateX() - 2);
 			}
 			else {
-				log.setTranslateX(log.getTranslateX() - 3);
+				log.setTranslateX(log.getTranslateX() - 1);
 			}
 		}
 		
 		//Person smooth movement
-		if(moveCount < 5) {
-			if(moveUp) {
-				person.setTranslateY(person.getTranslateY() - 10);
+		//Left and Right
+		if (moveCount < 5) {
+			if (moveLeft) {
+				person.setTranslateX(person.getTranslateX() - MOVE_INCREMENT);
 				moveCount++;
 			}
-			else if(moveDown) {
-				person.setTranslateY(person.getTranslateY() + 10);
-				moveCount++;
-			}
-			else if(moveRight) {
-				person.setTranslateX(person.getTranslateX() + 10);
-				moveCount++;
-			}
-			else if(moveLeft) {
-				person.setTranslateX(person.getTranslateX() - 10);
+			if (moveRight) {
+				person.setTranslateX(person.getTranslateX() + MOVE_INCREMENT);
 				moveCount++;
 			}
 		}
 		else {
 			moveCount = 0;
-			moveUp = false;
-			moveDown = false;
-			moveRight = false;
 			moveLeft = false;
+			moveRight = false;
 		}
 		
+		//Up and Down, lane bound movement
+		if (moveUp) {
+			moveUp = !movePlayerUp(person);
+		}
+		if (moveDown) {
+			moveDown = !movePlayerDown(person);
+		}
+		
+		//Check for win
+		checkWin(person, fightSongPlayer);
+		
 		//If person is on log, move them
+		//Reminder, change these hard-coded values
 		if(person.getTranslateY() == 690) {
-			person.setTranslateX(person.getTranslateX() - 3);
+			person.setTranslateX(person.getTranslateX() - 1);
 			if (!checkLogCollision(person, logs)) {
-				sendPlayerToBeginning(person);
+				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == 640) {
 			person.setTranslateX(person.getTranslateX() - 2);
 			if (!checkLogCollision(person, logs)) {
-				sendPlayerToBeginning(person);
+				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == 590) {
 			person.setTranslateX(person.getTranslateX() - 3);
 			if (!checkLogCollision(person, logs)) {
-				sendPlayerToBeginning(person);
+				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == 540) {
 			person.setTranslateX(person.getTranslateX() - 1);
 			if (!checkLogCollision(person, logs)) {
-				sendPlayerToBeginning(person);
+				sendPlayerToBeginning(person, true);
 			}
 		}
 		
 		if (checkCarCollisions(person, cars)) {
-			sendPlayerToBeginning(person);
+			sendPlayerToBeginning(person, true);
 		}
 		
 		if (Math.random() < .02){
@@ -259,6 +285,9 @@ public class Game extends Application{
 	}
 	
 	public boolean checkCarCollisions(ImageView person, List<Node> Cars) {
+		if (DEBUG) {
+			return false;
+		}
 		for(Node object: Cars) {
 			if (person.getTranslateX() > object.getTranslateX() + 220 && person.getTranslateX() < object.getTranslateX() + 300) {
 				if (person.getTranslateY() < object.getTranslateY() + 440 && person.getTranslateY() > object.getTranslateY() + 320) {
@@ -270,6 +299,9 @@ public class Game extends Application{
 	}
 	
 	public boolean checkLogCollision(ImageView person, List<Node> Logs) {
+		if (DEBUG) {
+			return true;
+		}
 		for(Node object: Logs) {
 			if (person.getTranslateX() > object.getTranslateX() + 220 && person.getTranslateX() < object.getTranslateX() + 330) {
 				if (person.getTranslateY() < object.getTranslateY() + 410 && person.getTranslateY() > object.getTranslateY() + 350) {
@@ -308,20 +340,307 @@ public class Game extends Application{
 	
 	// A win is defined as reaching the top of the play field
 	public void checkWin(ImageView person, MediaPlayer player){
-		if (person.getTranslateY() < 10) {
-			sendPlayerToBeginning(person);
+		if (person.getTranslateY() == END_LANE) {
+			sendPlayerToBeginning(person, false);
 			player.seek(Duration.ZERO); // Resets the media player
 			player.play();
 		}
 	}
 	
-	public void sendPlayerToBeginning(ImageView person) {
+	public void sendPlayerToBeginning(ImageView person, boolean died) {
 		moveUp = false;
+		if (died) {
+			lives--;
+			if (lives < 1) {
+				gameOver();
+			}
+		}
 		person.setTranslateX(275);
-		person.setTranslateY(740);
+		person.setTranslateY(START_LANE);
 	}
 	
+	//Displays gameover screen then sets game state to idle
+	public void gameOver() {
+	}
 	
+	//movement up function, returns true when movement is done
+	public boolean movePlayerUp(ImageView person) {
+		if (person.getTranslateY() > RIVER_ONE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_ONE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > RIVER_TWO) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_TWO) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > RIVER_THREE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_THREE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > RIVER_FOUR) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_FOUR) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > RIVER_ROAD_MEDIAN) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_ROAD_MEDIAN) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_ONE_ONE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_ONE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_ONE_TWO) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_TWO) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_ONE_THREE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_THREE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_ONE_FOUR) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_FOUR) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_ROAD_MEDIAN) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ROAD_MEDIAN) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_TWO_ONE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_ONE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_TWO_TWO) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_TWO) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_TWO_THREE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_THREE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > ROAD_TWO_FOUR) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_FOUR) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() > END_LANE) {
+			person.setTranslateY(person.getTranslateY() - MOVE_INCREMENT);
+			if (person.getTranslateY() == END_LANE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public boolean movePlayerDown(ImageView person) {
+		if (person.getTranslateY() < ROAD_TWO_FOUR) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_FOUR) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_TWO_THREE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_THREE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_TWO_TWO) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_TWO) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_TWO_ONE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_TWO_ONE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_ROAD_MEDIAN) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ROAD_MEDIAN) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_ONE_FOUR) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_FOUR) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_ONE_THREE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_THREE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_ONE_TWO) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_TWO) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < ROAD_ONE_ONE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == ROAD_ONE_ONE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < RIVER_ROAD_MEDIAN) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_ROAD_MEDIAN) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < RIVER_FOUR) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_FOUR) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < RIVER_THREE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_THREE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < RIVER_TWO) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_TWO) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < RIVER_ONE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == RIVER_ONE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (person.getTranslateY() < START_LANE) {
+			person.setTranslateY(person.getTranslateY() + MOVE_INCREMENT);
+			if (person.getTranslateY() == START_LANE) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
 	/*private void checkState(){
 		for (Node car: cars){
 			if(car.getBoundsInParent().intersects(person.getBoundsInParent())){
@@ -383,7 +702,7 @@ public class Game extends Application{
         person.setPreserveRatio(true); //preserves ratio
         person.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
         person.setCache(true); //improves performance
-        sendPlayerToBeginning(person);
+        sendPlayerToBeginning(person, false);
         
         HBox hbox1 = new HBox(); //A Horizontal Box (Basically a row for grouping)
         hbox1.getChildren().add(person); //Adding the image view as a child to the box
@@ -470,25 +789,25 @@ public class Game extends Application{
         root.getChildren().add(buildingHBox);
         
         //Adding Ernie to map
-        VBox vBox1 = new VBox();
-        vBox1.setPadding(new Insets(235,0,0,0)); //Padding so they don't sit at y = 0
-        vBox1.getChildren().add(ernieView);
+        //VBox vBox1 = new VBox();
+        //vBox1.setPadding(new Insets(235,0,0,0)); //Padding so they don't sit at y = 0
+        //vBox1.getChildren().add(ernieView);
         
         //Adding BC_Coin to map
-        VBox vBox2 = new VBox();
-        vBox2.setPadding(new Insets(120,0,0,0)); 
-        vBox2.getChildren().add(coinView);
+        //VBox vBox2 = new VBox();
+        //vBox2.setPadding(new Insets(120,0,0,0)); 
+        //vBox2.getChildren().add(coinView);
 		
         //Box to use as a grid for Ernie and coin
-        HBox spacingHBox = new HBox(190);
-        spacingHBox.getChildren().add(vBox1);
-        spacingHBox.getChildren().add(vBox2);
-        root.getChildren().add(spacingHBox);
+        //HBox spacingHBox = new HBox(190);
+        //spacingHBox.getChildren().add(vBox1);
+        //spacingHBox.getChildren().add(vBox2);
+        //root.getChildren().add(spacingHBox);
         
         //Sounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         
         Media fightSong = new Media(new File("BCFightSong.mp3").toURI().toString());
-        MediaPlayer fightSongPlayer = new MediaPlayer(fightSong);
+        fightSongPlayer = new MediaPlayer(fightSong);
         
         
         //this works!!!
@@ -497,18 +816,11 @@ public class Game extends Application{
         	switch (event.getCode()){
         	case W:
         	case UP:
-        		if (person.getTranslateY() > 0) {
-        			moveUp = true;
-        		}
-        		else {
-        			checkWin(person, fightSongPlayer);
-        		}
+    			moveUp = true;
         		break;
         	case S:
         	case DOWN:
-        		if (person.getTranslateY() < 710) {
-        			moveDown = true;
-        		}
+        		moveDown = true;
         		break;
         	case A:
         	case LEFT:
