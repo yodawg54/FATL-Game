@@ -60,30 +60,37 @@ public class Game extends Application{
 	int moveCount = 0;
 	int lives;
 	int gameState;
+	int carSpeed = 5;
 	
 	//Sound
 	MediaPlayer fightSongPlayer;
 	
 	// player lanes, must be divisible by MOVE_INCREMENT
 	final int START_LANE = 740;
-	final int RIVER_ONE = 690;
+	final int RIVER_ONE = 680;
 	final int RIVER_TWO = 640;
-	final int RIVER_THREE = 590;
-	final int RIVER_FOUR = 540;
-	final int RIVER_ROAD_MEDIAN = 490;
+	final int RIVER_THREE = 600;
+	final int RIVER_FOUR = 550;
+	final int RIVER_ROAD_MEDIAN = 500;
 	final int ROAD_ONE_ONE = 450;
 	final int ROAD_ONE_TWO = 410;
 	final int ROAD_ONE_THREE = 360;
 	final int ROAD_ONE_FOUR = 320;
 	final int ROAD_ROAD_MEDIAN = 270;
-	final int ROAD_TWO_ONE = 230;
-	final int ROAD_TWO_TWO = 190;
-	final int ROAD_TWO_THREE = 150;
-	final int ROAD_TWO_FOUR = 110;
+	final int ROAD_TWO_ONE = 210;
+	final int ROAD_TWO_TWO = 170;
+	final int ROAD_TWO_THREE = 130;
+	final int ROAD_TWO_FOUR = 90;
 	final int END_LANE = 50;
 	
 	//how far the player moves in one update loop
 	final int MOVE_INCREMENT = 10;
+	
+	//Car lanes
+	final int CAR_LANE_ONE = 70;
+	final int CAR_LANE_TWO = -30;
+	final int CAR_LANE_THREE = -170;
+	final int CAR_LANE_FOUR = -260;
 	
 	//http://tutorials.jenkov.com/javafx/button.html
 	//FileInputStream input = new FileInputStream("images/blueCar.png");
@@ -107,16 +114,21 @@ public class Game extends Application{
 	
 	
 	private ImageView spawnCar(){
-    	Image[] images = new Image[4];
+    	Image[] images = new Image[8];
     	images[0] = new Image("blueCar.png");
     	images[1] = new Image("GreenCar.png");
     	images[2] = new Image("YellowCar.png");
     	images[3] = new Image("RedCar.png");
+    	images[4] = new Image("blueCarFlipped.png");
+    	images[5] = new Image("GreenCarFlipped.png");
+    	images[6] = new Image("YellowCarFlipped.png");
+    	images[7] = new Image("RedCarFlipped.png");
     	
     	Random rand = new java.util.Random();
     	
         ImageView nCar = new ImageView();
-        nCar.setImage(images[rand.nextInt(4)]); //Creating a way to view an image - ImageView
+        int color = rand.nextInt(4);
+        nCar.setImage(images[color]); //Creating a way to view an image - ImageView
         nCar.setFitWidth(100); //resizes image
         nCar.setPreserveRatio(true); //preserves ratio
         nCar.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
@@ -125,18 +137,23 @@ public class Game extends Application{
         int lane = rand.nextInt(4);
         
         if(lane == 0) {
-        	nCar.setTranslateY(-300);
+        	nCar.setTranslateY(CAR_LANE_FOUR);
+        	nCar.setTranslateX(500);
         }
         else if(lane == 1) {
-        	nCar.setTranslateY(-215);
+        	nCar.setTranslateY(CAR_LANE_THREE);
+        	nCar.setTranslateX(-500);
+        	nCar.setImage(images[color + 4]);
         }
         else if(lane == 2) {
-        	nCar.setTranslateY(-60);
+        	nCar.setTranslateY(CAR_LANE_TWO);
+        	nCar.setTranslateX(500);
         }
         else {
-        	nCar.setTranslateY(50);
+        	nCar.setTranslateY(CAR_LANE_ONE);
+        	nCar.setTranslateX(-500);
+        	nCar.setImage(images[color + 4]);
         }
-        nCar.setTranslateX(500);
         
         //Car Horn
         if(rand.nextInt(5) < 1) {
@@ -195,7 +212,12 @@ public class Game extends Application{
 	
 	private void onUpdate(){
 		for (Node car: cars){
-			car.setTranslateX(car.getTranslateX() - 5);
+			if (car.getTranslateY() == CAR_LANE_ONE || car.getTranslateY() == CAR_LANE_THREE) {
+				car.setTranslateX(car.getTranslateX() + carSpeed);
+			}
+			else {
+				car.setTranslateX(car.getTranslateX() - carSpeed);
+			}
 		}
 		
 		if (Math.random() < 0.015){
@@ -250,25 +272,25 @@ public class Game extends Application{
 		
 		//If person is on log, move them
 		//Reminder, change these hard-coded values
-		if(person.getTranslateY() == 690) {
+		if(person.getTranslateY() == RIVER_ONE) {
 			person.setTranslateX(person.getTranslateX() - 1);
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
-		if(person.getTranslateY() == 640) {
+		if(person.getTranslateY() == RIVER_TWO) {
 			person.setTranslateX(person.getTranslateX() - 2);
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
-		if(person.getTranslateY() == 590) {
+		if(person.getTranslateY() == RIVER_THREE) {
 			person.setTranslateX(person.getTranslateX() - 3);
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
-		if(person.getTranslateY() == 540) {
+		if(person.getTranslateY() == RIVER_FOUR) {
 			person.setTranslateX(person.getTranslateX() - 1);
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
