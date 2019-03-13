@@ -43,7 +43,7 @@ public class Game extends Application{
 	//Color c = Color.rgb(244, 217, 66); //gold color
 	//int x = 0;
 	//int y = 0;
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private StackPane root;
 	private List<Node> cars = new ArrayList<>(); //nodes of cars
 	private List<Node> logs = new ArrayList<>(); //nodes of logs
@@ -57,13 +57,24 @@ public class Game extends Application{
 	private boolean moveDown = false;
 	private boolean moveRight = false;
 	private boolean moveLeft = false;
+	private boolean lifeOne = true;
+	private ImageView lifeOneView;
+	private boolean lifeTwo = true;
+	private ImageView lifeTwoView;
+	private ImageView timeBar;
 	int moveCount = 0;
 	int lives;
 	int gameState;
 	int carSpeed = 5;
+	boolean logHalfMovement = true;
+	
+	final double TIME_BAR_X_SCALE = 2.3;
+	final double TIME_BAR_Y_SCALE = .25;
+	private boolean clockSoundRunning = false;
 	
 	//Sound
 	MediaPlayer fightSongPlayer;
+	MediaPlayer clockPlayer;
 	
 	// player lanes, must be divisible by MOVE_INCREMENT
 	final int START_LANE = 740;
@@ -181,7 +192,14 @@ public class Game extends Application{
 	}
 	
 	private ImageView spawnLog(){
-		Image newLog = new Image("log.png");
+		Random rand = new java.util.Random();
+		Image newLog;
+		if (rand.nextInt(10) < 9) {
+			newLog = new Image("log.png");
+		}
+		else {
+			newLog = new Image("Alligator.png");
+		}
 		ImageView log = new ImageView();
 		log.setImage(newLog);
 		log.setFitWidth(100);
@@ -189,16 +207,15 @@ public class Game extends Application{
 		log.setSmooth(true);
 		log.setCache(true);
 		
-		Random rand = new java.util.Random();
-		int lane = rand.nextInt(4);
+		int lane = rand.nextInt(10);
         
-        if(lane == 0) {
+        if(lane < 4) {
         	log.setTranslateY(180);
         }
-        else if(lane == 1) {
+        else if(lane < 6) {
         	log.setTranslateY(225);
         }
-        else if(lane == 2) {
+        else if(lane < 9) {
         	log.setTranslateY(270);
         }
         else {
@@ -211,6 +228,36 @@ public class Game extends Application{
 	}
 	
 	private void onUpdate(){
+		//Life Counter update
+		if (!lifeOne) {
+			lifeOneView.setVisible(false);
+			if (!lifeTwo) {
+				lifeTwoView.setVisible(false);
+			}
+			else {
+				lifeTwoView.setVisible(true);
+			}
+		}
+		else {
+			lifeOneView.setVisible(true);
+		}
+		
+		//Time bar update
+		if (timeBar.getScaleX() > 0) {
+			timeBar.setScaleX(timeBar.getScaleX() - .002);
+		}
+		if (timeBar.getScaleX() < TIME_BAR_X_SCALE * .25) {
+			if (!clockSoundRunning) {
+				clockPlayer.seek(Duration.ZERO);
+				clockPlayer.play();
+				clockSoundRunning = true;
+			}
+		}
+		else if (timeBar.getScaleX() <= 0) {
+			sendPlayerToBeginning(person, true);
+		}
+		
+		//Car update
 		for (Node car: cars){
 			if (car.getTranslateY() == CAR_LANE_ONE || car.getTranslateY() == CAR_LANE_THREE) {
 				car.setTranslateX(car.getTranslateX() + carSpeed);
@@ -231,13 +278,17 @@ public class Game extends Application{
 				log.setTranslateX(log.getTranslateX() - 1);
 			}
 			else if (log.getTranslateY() == 225) {
-				log.setTranslateX(log.getTranslateX() - 3);
+				if (logHalfMovement) {
+					log.setTranslateX(log.getTranslateX() - 1);
+				}
 			}
 			else if (log.getTranslateY() == 270) {
-				log.setTranslateX(log.getTranslateX() - 2);
+				log.setTranslateX(log.getTranslateX() - 1);
 			}
 			else {
-				log.setTranslateX(log.getTranslateX() - 1);
+				if (logHalfMovement) {
+					log.setTranslateX(log.getTranslateX() - 1);
+				}
 			}
 		}
 		
@@ -273,19 +324,23 @@ public class Game extends Application{
 		//If person is on log, move them
 		//Reminder, change these hard-coded values
 		if(person.getTranslateY() == RIVER_ONE) {
-			person.setTranslateX(person.getTranslateX() - 1);
+			if (logHalfMovement) {
+				person.setTranslateX(person.getTranslateX() - 1);
+			}
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == RIVER_TWO) {
-			person.setTranslateX(person.getTranslateX() - 2);
+			person.setTranslateX(person.getTranslateX() - 1);
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == RIVER_THREE) {
-			person.setTranslateX(person.getTranslateX() - 3);
+			if (logHalfMovement) {
+				person.setTranslateX(person.getTranslateX() - 1);
+			}
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
@@ -296,6 +351,7 @@ public class Game extends Application{
 				sendPlayerToBeginning(person, true);
 			}
 		}
+		logHalfMovement = !logHalfMovement;
 		
 		if (checkCarCollisions(person, cars)) {
 			sendPlayerToBeginning(person, true);
@@ -311,8 +367,8 @@ public class Game extends Application{
 			return false;
 		}
 		for(Node object: Cars) {
-			if (person.getTranslateX() > object.getTranslateX() + 220 && person.getTranslateX() < object.getTranslateX() + 300) {
-				if (person.getTranslateY() < object.getTranslateY() + 440 && person.getTranslateY() > object.getTranslateY() + 320) {
+			if (person.getTranslateX() > object.getTranslateX() + 220 && person.getTranslateX() < object.getTranslateX() + 330) {
+				if (person.getTranslateY() < object.getTranslateY() + 430 && person.getTranslateY() > object.getTranslateY() + 320) {
 					return true;
 				}
 			}
@@ -372,13 +428,19 @@ public class Game extends Application{
 	public void sendPlayerToBeginning(ImageView person, boolean died) {
 		moveUp = false;
 		if (died) {
-			lives--;
-			if (lives < 1) {
+			if (lifeOne) {
+				lifeOne = false;
+			}
+			else if (lifeTwo) {
+				lifeTwo = false;
+			}
+			else {
 				gameOver();
 			}
 		}
 		person.setTranslateX(275);
 		person.setTranslateY(START_LANE);
+		timeBar.setScaleX(TIME_BAR_X_SCALE);
 	}
 	
 	//Displays gameover screen then sets game state to idle
@@ -716,6 +778,16 @@ public class Game extends Application{
         	}
         };
         timer.start();
+        
+      //TimeBar
+        Image time = new Image("timeBar.png");
+        timeBar = new ImageView();
+        timeBar.setImage(time);
+        timeBar.setTranslateX(175);
+        timeBar.setTranslateY(-380);
+        timeBar.setScaleX(TIME_BAR_X_SCALE);
+        timeBar.setScaleY(TIME_BAR_Y_SCALE);
+        root.getChildren().add(timeBar);
 
         Image gperson = new Image("bridgewaterGal.png"); //Grabbing the image from bin, setting it to a variable
         person = new ImageView(); //Creating a way to view an image - ImageView
@@ -753,12 +825,7 @@ public class Game extends Application{
         //BC Coin
         Image coin = new Image("BC_Coin.png");
         ImageView coinView = new ImageView();
-        coinView.setImage(coin);	
-        
-        //Ernie
-        Image ernie = new Image("Ernie.png");
-        ImageView ernieView = new ImageView();
-        ernieView.setImage(ernie);	
+        coinView.setImage(coin);		
         
         //Green Car
         //Image gCar = new Image("GreenCar.png");
@@ -800,15 +867,31 @@ public class Game extends Application{
         ImageView niningerView = new ImageView();
         niningerView.setImage(nininger);	
         
+        //LifeTwo
+        Image ernie = new Image("Ernie.png");
+        lifeTwoView = new ImageView();
+        lifeTwoView.setImage(ernie);
+        lifeTwoView.setTranslateX(-210);
+        lifeTwoView.setTranslateY(-385);
+        root.getChildren().add(lifeTwoView);
+        
+        //LifeOne
+        lifeOneView = new ImageView();
+        lifeOneView.setImage(ernie);
+        lifeOneView.setTranslateX(-180);
+        lifeOneView.setTranslateY(-385);
+        root.getChildren().add(lifeOneView);
+        
         //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-        HBox buildingHBox = new HBox(125); //Spacing of 75 between images
+        HBox buildingHBox = new HBox(75); //Spacing of 75 between images
         buildingHBox.getChildren().add(niningerView);
         buildingHBox.getChildren().add(memorialView);
         buildingHBox.getChildren().add(mcKinneyView);
         buildingHBox.getChildren().add(floryView);
         //Missing 5th building
         root.getChildren().add(buildingHBox);
+        buildingHBox.setTranslateY(END_LANE - 15);
         
         //Adding Ernie to map
         //VBox vBox1 = new VBox();
@@ -830,6 +913,9 @@ public class Game extends Application{
         
         Media fightSong = new Media(new File("BCFightSong.mp3").toURI().toString());
         fightSongPlayer = new MediaPlayer(fightSong);
+        
+        Media clock = new Media(new File("clock.mp3").toURI().toString());
+        clockPlayer = new MediaPlayer(clock);
         
         
         //this works!!!
