@@ -36,6 +36,8 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.effect.Blend;
+import javafx.scene.effect.BlendMode;
 
 public class Game extends Application{
 	
@@ -68,9 +70,20 @@ public class Game extends Application{
 	int carSpeed = 5;
 	boolean logHalfMovement = true;
 	
+	//time loops since last image spawn
+	final int CAR_SPAWN_LOOPS = 20;
+	int lane4 = 0;
+	int lane5 = 0;
+	int lane6 = 0;
+	int lane7 = 0;
+	
+	//Clock
 	final double TIME_BAR_X_SCALE = 2.3;
 	final double TIME_BAR_Y_SCALE = .25;
 	private boolean clockSoundRunning = false;
+	
+	//Hbox
+	HBox hbox1 = new HBox();
 	
 	//Sound
 	MediaPlayer fightSongPlayer;
@@ -98,10 +111,10 @@ public class Game extends Application{
 	final int MOVE_INCREMENT = 10;
 	
 	//Car lanes
-	final int CAR_LANE_ONE = 70;
-	final int CAR_LANE_TWO = -30;
-	final int CAR_LANE_THREE = -170;
-	final int CAR_LANE_FOUR = -260;
+	final int CAR_LANE_ONE = 60;
+	final int CAR_LANE_TWO = -40;
+	final int CAR_LANE_THREE = -180;
+	final int CAR_LANE_FOUR = -270;
 	
 	//http://tutorials.jenkov.com/javafx/button.html
 	//FileInputStream input = new FileInputStream("images/blueCar.png");
@@ -148,22 +161,46 @@ public class Game extends Application{
         int lane = rand.nextInt(4);
         
         if(lane == 0) {
-        	nCar.setTranslateY(CAR_LANE_FOUR);
-        	nCar.setTranslateX(500);
+        	if (lane4 > CAR_SPAWN_LOOPS) {
+        		nCar.setTranslateY(CAR_LANE_FOUR);
+        		nCar.setTranslateX(500);
+        		lane4 = 0;
+        	}
+        	else {
+        		nCar.setTranslateY(END_LANE + 500);
+        	}
         }
         else if(lane == 1) {
-        	nCar.setTranslateY(CAR_LANE_THREE);
-        	nCar.setTranslateX(-500);
-        	nCar.setImage(images[color + 4]);
+        	if (lane5 > CAR_SPAWN_LOOPS) {
+	        	nCar.setTranslateY(CAR_LANE_THREE);
+	        	nCar.setTranslateX(-500);
+	        	nCar.setImage(images[color + 4]);
+	        	lane5 = 0;
+        	}
+        	else {
+        		nCar.setTranslateY(END_LANE + 500);
+        	}
         }
         else if(lane == 2) {
-        	nCar.setTranslateY(CAR_LANE_TWO);
-        	nCar.setTranslateX(500);
+        	if (lane6 > CAR_SPAWN_LOOPS) {
+	        	nCar.setTranslateY(CAR_LANE_TWO);
+	        	nCar.setTranslateX(500);
+	        	lane6 = 0;
+        	}
+        	else {
+        		nCar.setTranslateY(END_LANE + 500);
+        	}
         }
         else {
-        	nCar.setTranslateY(CAR_LANE_ONE);
-        	nCar.setTranslateX(-500);
-        	nCar.setImage(images[color + 4]);
+        	if (lane7 > CAR_SPAWN_LOOPS) {
+	        	nCar.setTranslateY(CAR_LANE_ONE);
+	        	nCar.setTranslateX(-500);
+	        	nCar.setImage(images[color + 4]);
+	        	lane7 = 0;
+        	}
+        	else {
+        		nCar.setTranslateY(END_LANE + 500);
+        	}
         }
         
         //Car Horn
@@ -194,36 +231,36 @@ public class Game extends Application{
 	private ImageView spawnLog(){
 		Random rand = new java.util.Random();
 		Image newLog;
-		if (rand.nextInt(10) < 9) {
-			newLog = new Image("log.png");
-		}
-		else {
-			newLog = new Image("Alligator.png");
-		}
+		newLog = new Image("log.png");
 		ImageView log = new ImageView();
 		log.setImage(newLog);
 		log.setFitWidth(100);
 		log.setPreserveRatio(true);
 		log.setSmooth(true);
 		log.setCache(true);
+		//Blend blend = new Blend(BlendMode.SRC_OVER);
+		//blend.setTopInput(log.getEffect());
+		//person.setEffect(blend);
 		
 		int lane = rand.nextInt(10);
         
-        if(lane < 4) {
+        if(lane < 3) {
         	log.setTranslateY(180);
         }
-        else if(lane < 6) {
+        else if(lane < 5) {
         	log.setTranslateY(225);
         }
-        else if(lane < 9) {
+        else if(lane < 7) {
         	log.setTranslateY(270);
         }
         else {
         	log.setTranslateY(315);
         }
+        
         log.setTranslateX(500);
 		
 		root.getChildren().add(log);
+		hbox1.toFront();
 		return log;
 	}
 	
@@ -249,6 +286,7 @@ public class Game extends Application{
 		if (timeBar.getScaleX() < TIME_BAR_X_SCALE * .25) {
 			if (!clockSoundRunning) {
 				clockPlayer.seek(Duration.ZERO);
+				clockPlayer.setVolume(1);
 				clockPlayer.play();
 				clockSoundRunning = true;
 			}
@@ -317,6 +355,12 @@ public class Game extends Application{
 		if (moveDown) {
 			moveDown = !movePlayerDown(person);
 		}
+		
+		//Update time since last spawn
+		lane4++;
+		lane5++;
+		lane6++;
+		lane7++;
 		
 		//Check for win
 		checkWin(person, fightSongPlayer);
@@ -788,7 +832,8 @@ public class Game extends Application{
         timeBar.setScaleX(TIME_BAR_X_SCALE);
         timeBar.setScaleY(TIME_BAR_Y_SCALE);
         root.getChildren().add(timeBar);
-
+        
+        //Person
         Image gperson = new Image("bridgewaterGal.png"); //Grabbing the image from bin, setting it to a variable
         person = new ImageView(); //Creating a way to view an image - ImageView
         person.setImage(gperson); //Setting the image to ImageView so it can be viewer
@@ -796,11 +841,9 @@ public class Game extends Application{
         person.setPreserveRatio(true); //preserves ratio
         person.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
         person.setCache(true); //improves performance
-        sendPlayerToBeginning(person, false);
-        
-        HBox hbox1 = new HBox(); //A Horizontal Box (Basically a row for grouping)
         hbox1.getChildren().add(person); //Adding the image view as a child to the box
         root.getChildren().add(hbox1); //Needed to actually see on scene, adding the box as a child to the root
+        sendPlayerToBeginning(person, false);
         
         //Bridgewater Guy
         //Image bridgewaterGuy = new Image("BridgewaterGuy.png"); //Grabbing the image from bin, setting it to a variable
