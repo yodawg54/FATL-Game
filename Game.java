@@ -45,7 +45,7 @@ public class Game extends Application{
 	//Color c = Color.rgb(244, 217, 66); //gold color
 	//int x = 0;
 	//int y = 0;
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	private StackPane root;
 	private List<Node> cars = new ArrayList<>(); //nodes of cars
 	private List<Node> logs = new ArrayList<>(); //nodes of logs
@@ -59,14 +59,18 @@ public class Game extends Application{
 	private boolean moveDown = false;
 	private boolean moveRight = false;
 	private boolean moveLeft = false;
+	private boolean gameOver = false;
 	private boolean lifeOne = true;
 	private ImageView lifeOneView;
 	private boolean lifeTwo = true;
 	private ImageView lifeTwoView;
 	private ImageView timeBar;
+	int schoolDay = 0;
 	int moveCount = 0;
 	int lives;
-	int gameState;
+	int gameState = 1; //0 = idle, 1 = playing, 2 = dead
+	int deathAnimation = 0;
+	Image death;
 	int carSpeed = 5;
 	boolean logHalfMovement = true;
 	
@@ -88,6 +92,22 @@ public class Game extends Application{
 	//Sound
 	MediaPlayer fightSongPlayer;
 	MediaPlayer clockPlayer;
+	
+	//Bridgewater Gal
+	Image gperson;
+	
+	//Grades
+	Image[] grades;
+	ImageView bowman;
+	ImageView mckinney;
+	ImageView ninninger;
+	ImageView flory;
+	ImageView memorial;
+	int bowmanScore = 0;
+	int mckinneyScore = 0;
+	int ninningerScore = 0;
+	int floryScore = 0;
+	int memorialScore = 0;
 	
 	// player lanes, must be divisible by MOVE_INCREMENT
 	final int START_LANE = 740;
@@ -279,88 +299,116 @@ public class Game extends Application{
 			lifeOneView.setVisible(true);
 		}
 		
-		//Time bar update
-		if (timeBar.getScaleX() > 0) {
-			timeBar.setScaleX(timeBar.getScaleX() - .002);
-		}
-		if (timeBar.getScaleX() < TIME_BAR_X_SCALE * .25) {
-			if (!clockSoundRunning) {
-				clockPlayer.seek(Duration.ZERO);
-				clockPlayer.setVolume(1);
-				clockPlayer.play();
-				clockSoundRunning = true;
+		//Death animation
+		if(gameState == 2) {
+			if(deathAnimation % 50 < 25) {
+				person.setImage(death);
+			}
+			else {
+				person.setImage(gperson);
+			}
+			deathAnimation++;
+			if (deathAnimation > 200) {
+				deathAnimation = 0;
+				gameState = 1;
+				person.setImage(gperson);
+				sendPlayerToBeginning(person, false);
+				if (gameOver) {
+					gameState = 0;
+				}
 			}
 		}
-		else if (timeBar.getScaleX() <= 0) {
-			sendPlayerToBeginning(person, true);
+		
+		//Time bar update
+		if (gameState == 1) {
+			if (timeBar.getScaleX() > 0) {
+				timeBar.setScaleX(timeBar.getScaleX() - .001);
+			}
+			if (timeBar.getScaleX() < TIME_BAR_X_SCALE * .25) {
+				if (!clockSoundRunning) {
+					clockPlayer.seek(Duration.ZERO);
+					clockPlayer.setVolume(1);
+					clockPlayer.play();
+					clockSoundRunning = true;
+				}
+			}
+			if (timeBar.getScaleX() <= 0) {
+				sendPlayerToBeginning(person, true);
+			}
 		}
 		
 		//Car update
-		for (Node car: cars){
-			if (car.getTranslateY() == CAR_LANE_ONE || car.getTranslateY() == CAR_LANE_THREE) {
-				car.setTranslateX(car.getTranslateX() + carSpeed);
-			}
-			else {
-				car.setTranslateX(car.getTranslateX() - carSpeed);
-			}
-		}
-		
-		if (Math.random() < 0.015){
-			cars.add(spawnCar());
-			checkCarCollide(this.person);
-			//System.out.println("update method");
-		}
-		
-		for (Node log: logs){
-			if (log.getTranslateY() == 180) {
-				log.setTranslateX(log.getTranslateX() - 1);
-			}
-			else if (log.getTranslateY() == 225) {
-				if (logHalfMovement) {
-					log.setTranslateX(log.getTranslateX() - 1);
+		if (gameState != 2) {
+			for (Node car: cars){
+				if (car.getTranslateY() == CAR_LANE_ONE || car.getTranslateY() == CAR_LANE_THREE) {
+					car.setTranslateX(car.getTranslateX() + carSpeed);
+				}
+				else {
+					car.setTranslateX(car.getTranslateX() - carSpeed);
 				}
 			}
-			else if (log.getTranslateY() == 270) {
-				log.setTranslateX(log.getTranslateX() - 1);
+			
+			if (Math.random() < 0.015){
+				cars.add(spawnCar());
+				checkCarCollide(this.person);
+				//System.out.println("update method");
 			}
-			else {
-				if (logHalfMovement) {
+			
+			for (Node log: logs){
+				if (log.getTranslateY() == 180) {
 					log.setTranslateX(log.getTranslateX() - 1);
+				}
+				else if (log.getTranslateY() == 225) {
+					if (logHalfMovement) {
+						log.setTranslateX(log.getTranslateX() - 1);
+					}
+				}
+				else if (log.getTranslateY() == 270) {
+					log.setTranslateX(log.getTranslateX() - 1);
+				}
+				else {
+					if (logHalfMovement) {
+						log.setTranslateX(log.getTranslateX() - 1);
+					}
 				}
 			}
 		}
 		
 		//Person smooth movement
 		//Left and Right
-		if (moveCount < 5) {
-			if (moveLeft) {
-				person.setTranslateX(person.getTranslateX() - MOVE_INCREMENT);
-				moveCount++;
+		if (gameState == 1) {
+			if (moveCount < 5) {
+				if (moveLeft) {
+					person.setTranslateX(person.getTranslateX() - MOVE_INCREMENT);
+					moveCount++;
+				}
+				if (moveRight) {
+					person.setTranslateX(person.getTranslateX() + MOVE_INCREMENT);
+					moveCount++;
+				}
 			}
-			if (moveRight) {
-				person.setTranslateX(person.getTranslateX() + MOVE_INCREMENT);
-				moveCount++;
+			else {
+				moveCount = 0;
+				moveLeft = false;
+				moveRight = false;
 			}
-		}
-		else {
-			moveCount = 0;
-			moveLeft = false;
-			moveRight = false;
-		}
-		
-		//Up and Down, lane bound movement
-		if (moveUp) {
-			moveUp = !movePlayerUp(person);
-		}
-		if (moveDown) {
-			moveDown = !movePlayerDown(person);
+			
+			//Up and Down, lane bound movement
+			if (moveUp) {
+				moveUp = !movePlayerUp(person);
+			}
+			if (moveDown) {
+				moveDown = !movePlayerDown(person);
+			}
 		}
 		
 		//Update time since last spawn
-		lane4++;
-		lane5++;
-		lane6++;
-		lane7++;
+		if (gameState != 2) {
+			lane4++;
+			lane5++;
+			lane6++;
+			lane7++;
+		}
 		
 		//Check for win
 		checkWin(person, fightSongPlayer);
@@ -407,7 +455,7 @@ public class Game extends Application{
 	}
 	
 	public boolean checkCarCollisions(ImageView person, List<Node> Cars) {
-		if (DEBUG) {
+		if (DEBUG || gameState != 1) {
 			return false;
 		}
 		for(Node object: Cars) {
@@ -463,15 +511,99 @@ public class Game extends Application{
 	// A win is defined as reaching the top of the play field
 	public void checkWin(ImageView person, MediaPlayer player){
 		if (person.getTranslateY() == END_LANE) {
-			sendPlayerToBeginning(person, false);
-			player.seek(Duration.ZERO); // Resets the media player
-			player.play();
+			//Ninnenger
+			if (person.getTranslateX() < -180) {
+				if (ninningerScore != 0) {
+					sendPlayerToBeginning(person, true);
+				}
+				else {
+					ninningerScore = determineScore();
+					ninninger.setImage(grades[ninningerScore - 1]);
+					ninninger.setVisible(true);
+					sendPlayerToBeginning(person, false);
+					player.seek(Duration.ZERO); // Resets the media player
+					player.play();
+				}
+			}
+			//Memorial
+			else if (person.getTranslateX() < -60) {
+				if (memorialScore != 0) {
+					sendPlayerToBeginning(person, true);
+				}
+				else {
+					memorialScore = determineScore();
+					memorial.setImage(grades[memorialScore - 1]);
+					memorial.setVisible(true);
+					sendPlayerToBeginning(person, false);
+					player.seek(Duration.ZERO); // Resets the media player
+					player.play();
+				}
+			}
+			//McKinney
+			else if (person.getTranslateX() < 60) {
+				if (mckinneyScore != 0) {
+					sendPlayerToBeginning(person, true);
+				}
+				else {
+					mckinneyScore = determineScore();
+					mckinney.setImage(grades[mckinneyScore - 1]);
+					mckinney.setVisible(true);
+					sendPlayerToBeginning(person, false);
+					player.seek(Duration.ZERO); // Resets the media player
+					player.play();
+				}
+			}
+			//Flory
+			else if (person.getTranslateX() < 180) {
+				if (floryScore != 0) {
+					sendPlayerToBeginning(person, true);
+				}
+				else {
+					floryScore = determineScore();
+					flory.setImage(grades[floryScore - 1]);
+					flory.setVisible(true);
+					sendPlayerToBeginning(person, false);
+					player.seek(Duration.ZERO); // Resets the media player
+					player.play();
+				}
+			}
+			//Bowman
+			else {
+				if (bowmanScore != 0) {
+					sendPlayerToBeginning(person, true);
+				}
+				else {
+					bowmanScore = determineScore();
+					bowman.setImage(grades[bowmanScore - 1]);
+					bowman.setVisible(true);
+					sendPlayerToBeginning(person, false);
+					player.seek(Duration.ZERO); // Resets the media player
+					player.play();
+				}
+			}
 		}
+	}
+	
+	public int determineScore() {
+		if (timeBar.getScaleX() > TIME_BAR_X_SCALE * .8) {
+			return 1;
+		}
+		if (timeBar.getScaleX() > TIME_BAR_X_SCALE * .6) {
+			return 2;
+		}
+		if (timeBar.getScaleX() > TIME_BAR_X_SCALE * .4) {
+			return 3;
+		}
+		if (timeBar.getScaleX() > TIME_BAR_X_SCALE * .2) {
+			return 4;
+		}
+		return 5;
 	}
 	
 	public void sendPlayerToBeginning(ImageView person, boolean died) {
 		moveUp = false;
-		if (died) {
+		if (died && gameState == 1) {
+			gameState = 2;
 			if (lifeOne) {
 				lifeOne = false;
 			}
@@ -479,16 +611,14 @@ public class Game extends Application{
 				lifeTwo = false;
 			}
 			else {
-				gameOver();
+				gameOver = true;
 			}
 		}
-		person.setTranslateX(275);
-		person.setTranslateY(START_LANE);
-		timeBar.setScaleX(TIME_BAR_X_SCALE);
-	}
-	
-	//Displays gameover screen then sets game state to idle
-	public void gameOver() {
+		if (gameState != 2) {
+			person.setTranslateX(275);
+			person.setTranslateY(START_LANE);
+			timeBar.setScaleX(TIME_BAR_X_SCALE);
+		}
 	}
 	
 	//movement up function, returns true when movement is done
@@ -834,7 +964,7 @@ public class Game extends Application{
         root.getChildren().add(timeBar);
         
         //Person
-        Image gperson = new Image("bridgewaterGal.png"); //Grabbing the image from bin, setting it to a variable
+        gperson = new Image("bridgewaterGal.png"); //Grabbing the image from bin, setting it to a variable
         person = new ImageView(); //Creating a way to view an image - ImageView
         person.setImage(gperson); //Setting the image to ImageView so it can be viewer
         person.setFitWidth(50); //resizes image
@@ -891,24 +1021,60 @@ public class Game extends Application{
         //yCarView.setImage(yCar);	
         
         //Flory
-        Image flory = new Image("Flory.png");
-        ImageView floryView = new ImageView();
-        floryView.setImage(flory);	
+        flory = new ImageView();
+        flory.setScaleX(3);
+        flory.setScaleY(3);
+        flory.setTranslateX(-300);
+        flory.setTranslateY(-325);
+        flory.setSmooth(false);
+        root.getChildren().add(flory);
         
         //McKinney
-        Image mcKinney = new Image("McKinney.png");
-        ImageView mcKinneyView = new ImageView();
-        mcKinneyView.setImage(mcKinney);	
+        mckinney = new ImageView();
+        mckinney.setScaleX(3);
+        mckinney.setScaleY(3);
+        mckinney.setTranslateX(-800);
+        mckinney.setTranslateY(-325);
+        mckinney.setSmooth(false);
+        root.getChildren().add(mckinney);
         
         //Memorial
-        Image memorial = new Image("Memorial.png");
-        ImageView memorialView = new ImageView();
-        memorialView.setImage(memorial);	
+        memorial = new ImageView();
+        memorial.setScaleX(3);
+        memorial.setScaleY(3);
+        memorial.setTranslateX(-60);
+        memorial.setTranslateY(-325);
+        memorial.setSmooth(false);
+        root.getChildren().add(memorial);
         
-        //Nininger
-        Image nininger = new Image("Nininger.png");
-        ImageView niningerView = new ImageView();
-        niningerView.setImage(nininger);	
+        //Ninninger
+        ninninger = new ImageView();
+        ninninger.setScaleX(3);
+        ninninger.setScaleY(3);
+        ninninger.setTranslateX(60);
+        ninninger.setTranslateY(-325);
+        ninninger.setSmooth(false);
+        root.getChildren().add(ninninger);
+        
+        //Bowman
+        bowman = new ImageView();
+        bowman.setScaleX(3);
+        bowman.setScaleY(3);
+        bowman.setTranslateX(180);
+        bowman.setTranslateY(-325);
+        bowman.setSmooth(false);
+        root.getChildren().add(bowman);
+        
+        //Letter grades
+        Image gradeA = new Image("letterGradeA.png");
+        Image gradeB = new Image("letterGradeB.png");
+        Image gradeC = new Image("letterGradeC.png");
+        Image gradeD = new Image("letterGradeD.png");
+        Image gradeF = new Image("letterGradeF.png");
+        grades = new Image[] {gradeA, gradeB, gradeC, gradeD, gradeF};
+        
+        //Death
+        death = new Image("bones.png");
         
         //LifeTwo
         Image ernie = new Image("Ernie.png");
@@ -925,16 +1091,7 @@ public class Game extends Application{
         lifeOneView.setTranslateY(-385);
         root.getChildren().add(lifeOneView);
         
-        //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-        HBox buildingHBox = new HBox(75); //Spacing of 75 between images
-        buildingHBox.getChildren().add(niningerView);
-        buildingHBox.getChildren().add(memorialView);
-        buildingHBox.getChildren().add(mcKinneyView);
-        buildingHBox.getChildren().add(floryView);
-        //Missing 5th building
-        root.getChildren().add(buildingHBox);
-        buildingHBox.setTranslateY(END_LANE - 15);
+        //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         
         //Adding Ernie to map
         //VBox vBox1 = new VBox();
