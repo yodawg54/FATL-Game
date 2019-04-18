@@ -10,6 +10,7 @@ import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 //For midi playing
 import javax.sound.midi.InvalidMidiDataException;
@@ -39,6 +40,8 @@ import javafx.scene.text.Text;
 import javafx.scene.effect.Blend;
 import javafx.scene.effect.BlendMode;
 
+import java.math.*;
+
 public class Game extends Application{
 	
 	//Label title;
@@ -63,8 +66,11 @@ public class Game extends Application{
 	private boolean lifeOne = true;
 	private ImageView lifeOneView;
 	private boolean lifeTwo = true;
+	boolean playerPlaying = false; // For stamp sound effect
+	boolean scoresUp = false;
 	private ImageView lifeTwoView;
 	private ImageView timeBar;
+	private ImageView scoreBoard;
 	int schoolDay = 0;
 	int moveCount = 0;
 	int lives;
@@ -88,10 +94,12 @@ public class Game extends Application{
 	
 	//Hbox
 	HBox hbox1 = new HBox();
+	HBox hbox2 = new HBox();
 	
 	//Sound
 	MediaPlayer fightSongPlayer;
 	MediaPlayer clockPlayer;
+	MediaPlayer stampPlayer;
 	
 	//Bridgewater Gal
 	Image gperson;
@@ -103,11 +111,41 @@ public class Game extends Application{
 	ImageView ninninger;
 	ImageView flory;
 	ImageView memorial;
+	ImageView finalGrade;
 	int bowmanScore = 0;
 	int mckinneyScore = 0;
 	int ninningerScore = 0;
 	int floryScore = 0;
 	int memorialScore = 0;
+	
+	//Grade Positions
+	final int BOWMAN_ORIGINAL_X = 510;
+	final int BOWMAN_ORIGINAL_Y = 70;
+	final int FLORY_ORIGINAL_X = 395;
+	final int FLORY_ORIGINAL_Y = 70;
+	final int MCKINNEY_ORIGINAL_X = 280;
+	final int MCKINNEY_ORIGINAL_Y = 70;
+	final int MEMORIAL_ORIGINAL_X = 150;
+	final int MEMORIAL_ORIGINAL_Y = 70;
+	final int NINNINGER_ORIGINAL_X = 40;
+	final int NINNINGER_ORIGINAL_Y = 70;
+	
+	final int BOWMAN_NEW_X = 445;
+	final int BOWMAN_NEW_Y = 465;
+	final int FLORY_NEW_X = 495;
+	final int FLORY_NEW_Y = 405;
+	final int MCKINNEY_NEW_X = 470;
+	final int MCKINNEY_NEW_Y = 330;
+	final int MEMORIAL_NEW_X = 480;
+	final int MEMORIAL_NEW_Y = 370;
+	final int NINNINGER_NEW_X = 475;
+	final int NINNINGER_NEW_Y = 505;
+	
+	final int FINAL_GRADE_X = 450;
+	final int FINAL_GRADE_Y = 550;
+	
+	final int MOVE_INCREMENTS = 1;
+	final int PRECISION = 1;
 	
 	// player lanes, must be divisible by MOVE_INCREMENT
 	final int START_LANE = 740;
@@ -229,6 +267,8 @@ public class Game extends Application{
         }
         
         root.getChildren().add(nCar);
+        hbox1.toFront();
+        hbox2.toFront();
         return nCar;
     }
 	
@@ -281,6 +321,7 @@ public class Game extends Application{
 		
 		root.getChildren().add(log);
 		hbox1.toFront();
+		hbox2.toFront();
 		return log;
 	}
 	
@@ -316,6 +357,53 @@ public class Game extends Application{
 				if (gameOver) {
 					gameState = 0;
 				}
+			}
+		}
+		
+		//Round won
+		if(bowmanScore != 0 && mckinneyScore != 0 && floryScore != 0 && memorialScore != 0 && ninningerScore != 0) {
+			if (gameState != 0) {
+				scoreBoard.setVisible(true);
+				scoreBoard.setTranslateX(175);
+				scoreBoard.setTranslateY(-400);
+				gameState = 0;
+			}
+			if (scoreBoard.getTranslateY() < 300) {
+				scoreBoard.setTranslateY(scoreBoard.getTranslateY() + 3);
+			}
+			else if (!playerPlaying) {
+				playerPlaying = true;
+				stampPlayer.play();
+			}
+			else if (!scoresUp) {
+				if(stampPlayer.getCurrentTime().lessThan(Duration.seconds(1.638))) {
+					mckinney.setTranslateX(MCKINNEY_NEW_X);
+					mckinney.setTranslateY(MCKINNEY_NEW_Y);
+				}
+				else if (stampPlayer.getCurrentTime().lessThan(Duration.seconds(3.403))) {
+					memorial.setTranslateX(MEMORIAL_NEW_X);
+					memorial.setTranslateY(MEMORIAL_NEW_Y);
+				}
+				else if(stampPlayer.getCurrentTime().lessThan(Duration.seconds(5.131))) {
+					flory.setTranslateX(FLORY_NEW_X);
+					flory.setTranslateY(FLORY_NEW_Y);
+				}
+				else if(stampPlayer.getCurrentTime().lessThan(Duration.seconds(6.731))) {
+					bowman.setTranslateX(BOWMAN_NEW_X);
+					bowman.setTranslateY(BOWMAN_NEW_Y);
+				}
+				else {
+					ninninger.setTranslateX(NINNINGER_NEW_X);
+					ninninger.setTranslateY(NINNINGER_NEW_Y);
+					scoresUp = true;
+					stampPlayer.seek(Duration.seconds(.5));
+					stampPlayer.setStopTime(Duration.seconds(.2));
+				}
+			}
+			else {
+				int finalScore = (bowmanScore + ninningerScore + floryScore + memorialScore + mckinneyScore) / 5;
+				finalGrade.setImage(grades[finalScore - 1]);
+				finalGrade.setVisible(true);
 			}
 		}
 		
@@ -512,7 +600,7 @@ public class Game extends Application{
 	public void checkWin(ImageView person, MediaPlayer player){
 		if (person.getTranslateY() == END_LANE) {
 			//Ninnenger
-			if (person.getTranslateX() < -180) {
+			if (person.getTranslateX() < 100) {
 				if (ninningerScore != 0) {
 					sendPlayerToBeginning(person, true);
 				}
@@ -526,7 +614,7 @@ public class Game extends Application{
 				}
 			}
 			//Memorial
-			else if (person.getTranslateX() < -60) {
+			else if (person.getTranslateX() < 200) {
 				if (memorialScore != 0) {
 					sendPlayerToBeginning(person, true);
 				}
@@ -540,7 +628,7 @@ public class Game extends Application{
 				}
 			}
 			//McKinney
-			else if (person.getTranslateX() < 60) {
+			else if (person.getTranslateX() < 300) {
 				if (mckinneyScore != 0) {
 					sendPlayerToBeginning(person, true);
 				}
@@ -554,7 +642,7 @@ public class Game extends Application{
 				}
 			}
 			//Flory
-			else if (person.getTranslateX() < 180) {
+			else if (person.getTranslateX() < 450) {
 				if (floryScore != 0) {
 					sendPlayerToBeginning(person, true);
 				}
@@ -598,6 +686,16 @@ public class Game extends Application{
 			return 4;
 		}
 		return 5;
+	}
+	
+	public boolean aboutEqual(double number1, int number2, int precision) {
+		double difference = Math.abs(number1 - number2);
+		if (difference > precision) {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 	
 	public void sendPlayerToBeginning(ImageView person, boolean died) {
@@ -972,7 +1070,6 @@ public class Game extends Application{
         person.setSmooth(true); //Better quality (true) vs better performance (false - default) [probably want better perf., so delete this line later]
         person.setCache(true); //improves performance
         hbox1.getChildren().add(person); //Adding the image view as a child to the box
-        root.getChildren().add(hbox1); //Needed to actually see on scene, adding the box as a child to the root
         sendPlayerToBeginning(person, false);
         
         //Bridgewater Guy
@@ -1020,50 +1117,69 @@ public class Game extends Application{
         //ImageView yCarView = new ImageView();
         //yCarView.setImage(yCar);	
         
+        //Score Board
+        scoreBoard = new ImageView(new Image("transcript.png"));
+        scoreBoard.setScaleX(3);
+        scoreBoard.setScaleY(3);
+        root.getChildren().add(scoreBoard);
+        scoreBoard.setVisible(false);
+        hbox1.getChildren().add(scoreBoard);
+        root.getChildren().add(hbox1);
+        
         //Flory
         flory = new ImageView();
         flory.setScaleX(3);
         flory.setScaleY(3);
-        flory.setTranslateX(-300);
-        flory.setTranslateY(-325);
+        flory.setTranslateX(FLORY_ORIGINAL_X);
+        flory.setTranslateY(FLORY_ORIGINAL_Y);
         flory.setSmooth(false);
-        root.getChildren().add(flory);
+        hbox2.getChildren().add(flory);
         
         //McKinney
         mckinney = new ImageView();
         mckinney.setScaleX(3);
         mckinney.setScaleY(3);
-        mckinney.setTranslateX(-800);
-        mckinney.setTranslateY(-325);
+        mckinney.setTranslateX(MCKINNEY_ORIGINAL_X);
+        mckinney.setTranslateY(MCKINNEY_ORIGINAL_Y);
         mckinney.setSmooth(false);
-        root.getChildren().add(mckinney);
+        hbox2.getChildren().add(mckinney);
         
         //Memorial
         memorial = new ImageView();
         memorial.setScaleX(3);
         memorial.setScaleY(3);
-        memorial.setTranslateX(-60);
-        memorial.setTranslateY(-325);
+        memorial.setTranslateX(MEMORIAL_ORIGINAL_X);
+        memorial.setTranslateY(MEMORIAL_ORIGINAL_Y);
         memorial.setSmooth(false);
-        root.getChildren().add(memorial);
+        hbox2.getChildren().add(memorial);
         
         //Ninninger
         ninninger = new ImageView();
         ninninger.setScaleX(3);
         ninninger.setScaleY(3);
-        ninninger.setTranslateX(60);
-        ninninger.setTranslateY(-325);
+        ninninger.setTranslateX(NINNINGER_ORIGINAL_X);
+        ninninger.setTranslateY(NINNINGER_ORIGINAL_Y);
         ninninger.setSmooth(false);
-        root.getChildren().add(ninninger);
+        hbox2.getChildren().add(ninninger);
         
         //Bowman
         bowman = new ImageView();
         bowman.setScaleX(3);
         bowman.setScaleY(3);
-        bowman.setTranslateX(180);
-        bowman.setTranslateY(-325);
+        bowman.setTranslateX(BOWMAN_ORIGINAL_X);
+        bowman.setTranslateY(BOWMAN_ORIGINAL_Y);
         bowman.setSmooth(false);
-        root.getChildren().add(bowman);
+        hbox2.getChildren().add(bowman);
+        root.getChildren().add(hbox2);
+        
+        //Final Grade
+        finalGrade = new ImageView();
+        finalGrade.setScaleX(3);
+        finalGrade.setScaleY(3);
+        finalGrade.setTranslateX(FINAL_GRADE_X);
+        finalGrade.setTranslateY(FINAL_GRADE_Y);
+        finalGrade.setSmooth(false);
+        hbox2.getChildren().add(finalGrade);
         
         //Letter grades
         Image gradeA = new Image("letterGradeA.png");
@@ -1117,6 +1233,9 @@ public class Game extends Application{
         Media clock = new Media(new File("clock.mp3").toURI().toString());
         clockPlayer = new MediaPlayer(clock);
         
+        Media stamp = new Media(new File("stamp.mp3").toURI().toString());
+        stampPlayer = new MediaPlayer(stamp);
+        stampPlayer.setVolume(.5);
         
         //this works!!!
         
