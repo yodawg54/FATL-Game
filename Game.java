@@ -34,6 +34,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -66,6 +67,7 @@ public class Game extends Application{
 	private boolean lifeOne = true;
 	private ImageView lifeOneView;
 	private boolean lifeTwo = true;
+	private boolean wrappingUp = false;
 	boolean playerPlaying = false; // For stamp sound effect
 	boolean scoresUp = false;
 	private ImageView lifeTwoView;
@@ -73,7 +75,7 @@ public class Game extends Application{
 	private ImageView scoreBoard;
 	int schoolDay = 0;
 	int moveCount = 0;
-	int lives;
+	private int level = 0;
 	int gameState = 1; //0 = idle, 1 = playing, 2 = dead
 	int deathAnimation = 0;
 	Image death;
@@ -356,6 +358,7 @@ public class Game extends Application{
 				sendPlayerToBeginning(person, false);
 				if (gameOver) {
 					gameState = 0;
+					schoolDay = 0;
 				}
 			}
 		}
@@ -396,14 +399,32 @@ public class Game extends Application{
 					ninninger.setTranslateX(NINNINGER_NEW_X);
 					ninninger.setTranslateY(NINNINGER_NEW_Y);
 					scoresUp = true;
-					stampPlayer.seek(Duration.seconds(.5));
-					stampPlayer.setStopTime(Duration.seconds(.2));
 				}
 			}
-			else {
+			else if (stampPlayer.getCurrentTime().greaterThan(Duration.seconds(7)) && scoresUp) {
+				stampPlayer.seek(Duration.ZERO);
+				stampPlayer.setStopTime(Duration.seconds(4));
+				stampPlayer.play();
 				int finalScore = (bowmanScore + ninningerScore + floryScore + memorialScore + mckinneyScore) / 5;
 				finalGrade.setImage(grades[finalScore - 1]);
 				finalGrade.setVisible(true);
+				wrappingUp = true;
+			}
+			else if (wrappingUp && stampPlayer.getCurrentTime().greaterThan(Duration.seconds(1))) {
+				scoresUp = false;
+				stampPlayer.seek(Duration.ZERO);
+				stampPlayer.stop();
+				wrappingUp = false;
+				increaseDifficulty();
+				scoreBoard.setVisible(false);
+				setGradesToOriginalPosition();
+				finalGrade.setVisible(false);
+				playerPlaying = false;
+				scoresUp = false;
+				moveUp = false;
+				stampPlayer.setStopTime(stampPlayer.getMedia().getDuration());
+				gameState = 1;
+				schoolDay++;
 			}
 		}
 		
@@ -429,14 +450,14 @@ public class Game extends Application{
 		if (gameState != 2) {
 			for (Node car: cars){
 				if (car.getTranslateY() == CAR_LANE_ONE || car.getTranslateY() == CAR_LANE_THREE) {
-					car.setTranslateX(car.getTranslateX() + carSpeed);
+					car.setTranslateX(car.getTranslateX() + carSpeed + (schoolDay * .5));
 				}
 				else {
-					car.setTranslateX(car.getTranslateX() - carSpeed);
+					car.setTranslateX(car.getTranslateX() - carSpeed - (schoolDay * .5)); //school day increases car speed
 				}
 			}
 			
-			if (Math.random() < 0.015){
+			if (Math.random() < 0.015 + (.0025 * schoolDay)){ //later school days increase car spawn frequency
 				cars.add(spawnCar());
 				checkCarCollide(this.person);
 				//System.out.println("update method");
@@ -444,19 +465,19 @@ public class Game extends Application{
 			
 			for (Node log: logs){
 				if (log.getTranslateY() == 180) {
-					log.setTranslateX(log.getTranslateX() - 1);
+					log.setTranslateX(log.getTranslateX() - 1 - (schoolDay * .5));
 				}
 				else if (log.getTranslateY() == 225) {
 					if (logHalfMovement) {
-						log.setTranslateX(log.getTranslateX() - 1);
+						log.setTranslateX(log.getTranslateX() - 1 - (schoolDay * .5));
 					}
 				}
 				else if (log.getTranslateY() == 270) {
-					log.setTranslateX(log.getTranslateX() - 1);
+					log.setTranslateX(log.getTranslateX() - 1 - (schoolDay * .5));
 				}
 				else {
 					if (logHalfMovement) {
-						log.setTranslateX(log.getTranslateX() - 1);
+						log.setTranslateX(log.getTranslateX() - 1 - (schoolDay * .5));
 					}
 				}
 			}
@@ -505,28 +526,28 @@ public class Game extends Application{
 		//Reminder, change these hard-coded values
 		if(person.getTranslateY() == RIVER_ONE) {
 			if (logHalfMovement) {
-				person.setTranslateX(person.getTranslateX() - 1);
+				person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			}
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == RIVER_TWO) {
-			person.setTranslateX(person.getTranslateX() - 1);
+			person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == RIVER_THREE) {
 			if (logHalfMovement) {
-				person.setTranslateX(person.getTranslateX() - 1);
+				person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			}
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
 		if(person.getTranslateY() == RIVER_FOUR) {
-			person.setTranslateX(person.getTranslateX() - 1);
+			person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
@@ -537,7 +558,7 @@ public class Game extends Application{
 			sendPlayerToBeginning(person, true);
 		}
 		
-		if (Math.random() < .02){
+		if (Math.random() < .02 + (.005 * schoolDay)){ //Logs spawn more frequently as the game progresses
 			logs.add(spawnLog());
 		}
 	}
@@ -1029,6 +1050,35 @@ public class Game extends Application{
 	
 	public void randomizeCoin(ImageView coin) {
 		
+	}
+	
+	public void increaseDifficulty() {
+		
+	}
+	
+	public void setGradesToOriginalPosition() {
+		bowman.setVisible(false);
+		mckinney.setVisible(false);
+		flory.setVisible(false);
+		ninninger.setVisible(false);
+		memorial.setVisible(false);
+		
+		bowmanScore = 0;
+		mckinneyScore = 0;
+		floryScore = 0;
+		ninningerScore = 0;
+		memorialScore = 0;
+		
+		bowman.setTranslateX(BOWMAN_ORIGINAL_X);
+		bowman.setTranslateY(BOWMAN_ORIGINAL_Y);
+		mckinney.setTranslateX(MCKINNEY_ORIGINAL_X);
+		mckinney.setTranslateY(MCKINNEY_ORIGINAL_Y);
+		flory.setTranslateX(FLORY_ORIGINAL_X);
+		flory.setTranslateY(FLORY_ORIGINAL_Y);
+		ninninger.setTranslateX(NINNINGER_ORIGINAL_X);
+		ninninger.setTranslateY(NINNINGER_ORIGINAL_Y);
+		memorial.setTranslateX(MEMORIAL_ORIGINAL_X);
+		memorial.setTranslateY(MEMORIAL_ORIGINAL_Y);
 	}
 	
 	@Override
