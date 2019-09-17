@@ -1,6 +1,7 @@
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import sun.security.util.Resources;
 
@@ -73,14 +74,20 @@ public class Game extends Application{
 	private ImageView lifeTwoView;
 	private ImageView timeBar;
 	private ImageView scoreBoard;
+	private ImageView idleView;
 	int schoolDay = 0;
 	int moveCount = 0;
 	private int level = 0;
-	int gameState = 1; //0 = idle, 1 = playing, 2 = dead
+	int gameState = 4; //0 = idle, 1 = playing, 2 = dead, 3 = enteringHighScore, 4 = no player
 	int deathAnimation = 0;
+	int idleCounter = 0;
 	Image death;
 	int carSpeed = 5;
 	boolean logHalfMovement = true;
+	
+	//score and credits
+	int credits = 0;
+	int score = 0;
 	
 	//time loops since last image spawn
 	final int CAR_SPAWN_LOOPS = 20;
@@ -102,6 +109,7 @@ public class Game extends Application{
 	MediaPlayer fightSongPlayer;
 	MediaPlayer clockPlayer;
 	MediaPlayer stampPlayer;
+	MediaPlayer riverPlayer;
 	
 	//Bridgewater Gal
 	Image gperson;
@@ -196,6 +204,17 @@ public class Game extends Application{
 	
 	}*/
 	
+	private void startGame() {
+		if (credits != 0) {
+			credits--;
+			score = 0;
+			gameState = 1;
+		}
+	}
+	
+	private void insertCoin() {
+		credits++;
+	}
 	
 	private ImageView spawnCar(){
     	Image[] images = new Image[8];
@@ -270,23 +289,27 @@ public class Game extends Application{
         
         root.getChildren().add(nCar);
         hbox1.toFront();
-        hbox2.toFront();
+        if (playerPlaying) {
+			hbox2.toFront();
+		}
         return nCar;
     }
 	
 	private void playRandomCarHorn() {
-		double rand = Math.random();
-		if (rand < 0.5) {
-			Media carHorn = new Media(new File("carHorn.mp3").toURI().toString());
-	        MediaPlayer carHornPlayer = new MediaPlayer(carHorn);
-	        carHornPlayer.setVolume(.3);
-	        carHornPlayer.play();
-		}
-		else {
-			Media carHorn1 = new Media(new File("carHorn1.mp3").toURI().toString());
-	        MediaPlayer carHornPlayer1 = new MediaPlayer(carHorn1);
-	        carHornPlayer1.setVolume(.3);
-	        carHornPlayer1.play();
+		if(person.getTranslateY() < RIVER_FOUR) {
+			double rand = Math.random();
+			if (rand < 0.5) {
+				Media carHorn = new Media(new File("carHorn.mp3").toURI().toString());
+		        MediaPlayer carHornPlayer = new MediaPlayer(carHorn);
+		        carHornPlayer.setVolume(.2);
+		        carHornPlayer.play();
+			}
+			else {
+				Media carHorn1 = new Media(new File("carHorn1.mp3").toURI().toString());
+		        MediaPlayer carHornPlayer1 = new MediaPlayer(carHorn1);
+		        carHornPlayer1.setVolume(.2);
+		        carHornPlayer1.play();
+			}
 		}
 	}
 	
@@ -323,11 +346,19 @@ public class Game extends Application{
 		
 		root.getChildren().add(log);
 		hbox1.toFront();
-		hbox2.toFront();
+		if (playerPlaying) {
+			hbox2.toFront();
+		}
 		return log;
 	}
 	
 	private void onUpdate(){
+		//Idle screens
+		if (gameState == 4) {
+			idleView.setVisible(true);
+			idleView.toFront();
+		}
+		
 		//Life Counter update
 		if (!lifeOne) {
 			lifeOneView.setVisible(false);
@@ -357,8 +388,9 @@ public class Game extends Application{
 				person.setImage(gperson);
 				sendPlayerToBeginning(person, false);
 				if (gameOver) {
-					gameState = 0;
+					gameState = 4;
 					schoolDay = 0;
+					setGradesToOriginalPosition();
 				}
 			}
 		}
@@ -369,6 +401,8 @@ public class Game extends Application{
 				scoreBoard.setVisible(true);
 				scoreBoard.setTranslateX(175);
 				scoreBoard.setTranslateY(-400);
+				hbox2.toFront();
+				hbox1.toFront();
 				gameState = 0;
 			}
 			if (scoreBoard.getTranslateY() < 300) {
@@ -377,6 +411,7 @@ public class Game extends Application{
 			else if (!playerPlaying) {
 				playerPlaying = true;
 				stampPlayer.play();
+				hbox2.toFront();
 			}
 			else if (!scoresUp) {
 				if(stampPlayer.getCurrentTime().lessThan(Duration.seconds(1.638))) {
@@ -483,6 +518,34 @@ public class Game extends Application{
 			}
 		}
 		
+		//River sound
+		if (person.getTranslateY() < ROAD_ONE_THREE || gameState == 0) {
+			new Thread(() -> riverPlayer.stop()).start();
+		}
+		else {
+			if (riverPlayer.getStatus() != Status.PLAYING) {
+				new Thread(() -> riverPlayer.play()).start();
+			}
+			if (person.getTranslateY() >= START_LANE) {
+				riverPlayer.setVolume(.15);
+			}
+			else if (person.getTranslateY() >= RIVER_FOUR) {
+				riverPlayer.setVolume(.2);
+			}
+			else if (person.getTranslateY() >= RIVER_ROAD_MEDIAN) {
+				riverPlayer.setVolume(.15);
+			}
+			else if (person.getTranslateY() >= ROAD_ONE_ONE) {
+				riverPlayer.setVolume(.1);
+			}
+			else if (person.getTranslateY() >= ROAD_ONE_TWO) {
+				riverPlayer.setVolume(.05);
+			}
+			else if (person.getTranslateY() >= ROAD_ONE_THREE) {
+				riverPlayer.setVolume(.025);
+			}
+		}
+		
 		//Person smooth movement
 		//Left and Right
 		if (gameState == 1) {
@@ -524,7 +587,7 @@ public class Game extends Application{
 		
 		//If person is on log, move them
 		//Reminder, change these hard-coded values
-		if(person.getTranslateY() == RIVER_ONE) {
+		if(person.getTranslateY() == RIVER_ONE && gameState == 1) {
 			if (logHalfMovement) {
 				person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			}
@@ -532,13 +595,13 @@ public class Game extends Application{
 				sendPlayerToBeginning(person, true);
 			}
 		}
-		if(person.getTranslateY() == RIVER_TWO) {
+		if(person.getTranslateY() == RIVER_TWO && gameState == 1) {
 			person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
 			}
 		}
-		if(person.getTranslateY() == RIVER_THREE) {
+		if(person.getTranslateY() == RIVER_THREE && gameState == 1) {
 			if (logHalfMovement) {
 				person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			}
@@ -546,7 +609,7 @@ public class Game extends Application{
 				sendPlayerToBeginning(person, true);
 			}
 		}
-		if(person.getTranslateY() == RIVER_FOUR) {
+		if(person.getTranslateY() == RIVER_FOUR && gameState == 1) {
 			person.setTranslateX(person.getTranslateX() - 1 - (schoolDay * .5));
 			if (!checkLogCollision(person, logs)) {
 				sendPlayerToBeginning(person, true);
@@ -592,29 +655,10 @@ public class Game extends Application{
 	}
 	
 	public void checkCarCollide(Node person){
-		/*boolean collide=false;
-		System.out.println(cars.size());
+	}
+	
+	public void showIdleScreen() {
 		
-		for(int i=0;i<cars.size();i++){
-			//checks the bounds for both the person and every car
-			if(person.getBoundsInParent().intersects(cars.get(i).getBoundsInParent())){
-				collide=true;
-			}
-		}*/
-		//System.out.println(CRASH);
-		//System.out.println("person x val: " + person.getTranslateX());
-		//System.out.println("person Y val: " + person.getTranslateY());
-		//if(CRASH && (person.getTranslateY()>= 110 && person.getTranslateY()<=180)){
-			//System.out.println(CRASH);
-			//person.setTranslateX(125);
-			//person.setTranslateY(350);
-			//CRASH = false;
-		//}
-		//nCar.setTranslateY(-30); //need to find good bounds for this
-        //nCar.setTranslateX(110);
-		
-		
-		//return collide;
 	}
 	
 	// A win is defined as reaching the top of the play field
@@ -1092,6 +1136,8 @@ public class Game extends Application{
         scene.getStylesheets().addAll(this.getClass().getResource("myCSS.css").toExternalForm());
 		game.setScene(scene);
         game.setTitle("The Official Bridgewater Video Game - FATL");
+        game.setResizable(false);
+        game.initStyle(StageStyle.UNDECORATED);
         
         timer = new AnimationTimer(){
         	@Override
@@ -1257,6 +1303,59 @@ public class Game extends Application{
         lifeOneView.setTranslateY(-385);
         root.getChildren().add(lifeOneView);
         
+        //Idle screen
+        Image idleScreen = new Image("idle.png");
+        idleView = new ImageView();
+        idleView.setImage(idleScreen);
+        idleView.setTranslateX(0);
+        idleView.setTranslateY(0);
+        idleView.setScaleX(3);
+        idleView.setScaleY(3);
+        idleView.setVisible(false);
+        root.getChildren().add(idleView);
+        
+        //Numbers
+        Image[] numbers = new Image[10];
+        numbers[0] = new Image("lettersAndNumbers/0.png");
+        numbers[1] = new Image("lettersAndNumbers/1.png");
+        numbers[2] = new Image("lettersAndNumbers/2.png");
+        numbers[3] = new Image("lettersAndNumbers/3.png");
+        numbers[4] = new Image("lettersAndNumbers/4.png");
+        numbers[5] = new Image("lettersAndNumbers/5.png");
+        numbers[6] = new Image("lettersAndNumbers/6.png");
+        numbers[7] = new Image("lettersAndNumbers/7.png");
+        numbers[8] = new Image("lettersAndNumbers/8.png");
+        numbers[9] = new Image("lettersAndNumbers/9.png");
+        
+        //Letters
+        Image[] letters = new Image[26];
+        letters[0] = new Image("lettersAndNumbers/a.png");
+        letters[1] = new Image("lettersAndNumbers/b.png");
+        letters[2] = new Image("lettersAndNumbers/c.png");
+        letters[3] = new Image("lettersAndNumbers/d.png");
+        letters[4] = new Image("lettersAndNumbers/e.png");
+        letters[5] = new Image("lettersAndNumbers/f.png");
+        letters[6] = new Image("lettersAndNumbers/g.png");
+        letters[7] = new Image("lettersAndNumbers/h.png");
+        letters[8] = new Image("lettersAndNumbers/i.png");
+        letters[9] = new Image("lettersAndNumbers/j.png");
+        letters[10] = new Image("lettersAndNumbers/k.png");
+        letters[11] = new Image("lettersAndNumbers/l.png");
+        letters[12] = new Image("lettersAndNumbers/m.png");
+        letters[13] = new Image("lettersAndNumbers/n.png");
+        letters[14] = new Image("lettersAndNumbers/o.png");
+        letters[15] = new Image("lettersAndNumbers/p.png");
+        letters[16] = new Image("lettersAndNumbers/q.png");
+        letters[17] = new Image("lettersAndNumbers/r.png");
+        letters[18] = new Image("lettersAndNumbers/s.png");
+        letters[19] = new Image("lettersAndNumbers/t.png");
+        letters[20] = new Image("lettersAndNumbers/u.png");
+        letters[21] = new Image("lettersAndNumbers/v.png");
+        letters[22] = new Image("lettersAndNumbers/w.png");
+        letters[23] = new Image("lettersAndNumbers/x.png");
+        letters[24] = new Image("lettersAndNumbers/y.png");
+        letters[25] = new Image("lettersAndNumbers/z.png");
+        
         //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         
         //Adding Ernie to map
@@ -1283,6 +1382,13 @@ public class Game extends Application{
         Media clock = new Media(new File("clock.mp3").toURI().toString());
         clockPlayer = new MediaPlayer(clock);
         
+        Media river = new Media(new File("river.mp3").toURI().toString());
+        riverPlayer = new MediaPlayer(river);
+        riverPlayer.setStartTime(Duration.ZERO);
+        riverPlayer.setStopTime(Duration.INDEFINITE);
+        riverPlayer.setAutoPlay(true);
+        riverPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        
         Media stamp = new Media(new File("stamp.mp3").toURI().toString());
         stampPlayer = new MediaPlayer(stamp);
         stampPlayer.setVolume(.5);
@@ -1291,6 +1397,12 @@ public class Game extends Application{
         
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
+        	case ENTER:
+        		startGame();
+        		break;
+        	case C:
+        		insertCoin();
+        		break;
         	case W:
         	case UP:
     			moveUp = true;
