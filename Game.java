@@ -7,6 +7,7 @@ import sun.security.util.Resources;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.effect.Blend;
 import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.ColorAdjust;
 
 import java.math.*;
 
@@ -101,9 +103,17 @@ public class Game extends Application{
 	final double TIME_BAR_Y_SCALE = .25;
 	private boolean clockSoundRunning = false;
 	
+	//Score screen
+	ImageView creditsImage;
+	
+	//Letters and numbers
+	Image[] letters;
+	Image[] numbers;
+	
 	//Hbox
 	HBox hbox1 = new HBox();
 	HBox hbox2 = new HBox();
+	HBox idle = new HBox();
 	
 	//Sound
 	MediaPlayer fightSongPlayer;
@@ -113,6 +123,9 @@ public class Game extends Application{
 	
 	//Bridgewater Gal
 	Image gperson;
+	
+	//ImageViews for high scores
+	ImageView[] highScores;
 	
 	//Grades
 	Image[] grades;
@@ -204,16 +217,157 @@ public class Game extends Application{
 	
 	}*/
 	
+	private void readHighScoresFromFile() {
+		try {
+			FileReader read = new FileReader("highScores.txt");
+			highScores = new ImageView[70];
+			char[] input = new char[70];
+			read.read(input, 0, input.length);
+			for (int i = 0; i < 70; i++) {
+				switch (input[i]) {
+					case 'A':
+						highScores[i].setImage(letters[0]);
+						break;
+					case 'B':
+						highScores[i].setImage(letters[1]);
+						break;
+					case 'C':
+						highScores[i].setImage(letters[2]);
+						break;
+					case 'D':
+						highScores[i].setImage(letters[3]);
+						break;
+					case 'E':
+						highScores[i].setImage(letters[4]);
+						break;
+					case 'F':
+						highScores[i].setImage(letters[5]);
+						break;
+					case 'G':
+						highScores[i].setImage(letters[6]);
+						break;
+					case 'H':
+						highScores[i].setImage(letters[7]);
+						break;
+					case 'I':
+						highScores[i].setImage(letters[8]);
+						break;
+					case 'J':
+						highScores[i].setImage(letters[9]);
+						break;
+					case 'K':
+						highScores[i].setImage(letters[10]);
+						break;
+					case 'L':
+						highScores[i].setImage(letters[11]);
+						break;
+					case 'M':
+						highScores[i].setImage(letters[12]);
+						break;
+					case 'N':
+						highScores[i].setImage(letters[13]);
+						break;
+					case 'O':
+						highScores[i].setImage(letters[14]);
+						break;
+					case 'P':
+						highScores[i].setImage(letters[15]);
+						break;
+					case 'Q':
+						highScores[i].setImage(letters[16]);
+						break;
+					case 'R':
+						highScores[i].setImage(letters[17]);
+						break;
+					case 'S':
+						highScores[i].setImage(letters[18]);
+						break;
+					case 'T':
+						highScores[i].setImage(letters[19]);
+						break;
+					case 'U':
+						highScores[i].setImage(letters[20]);
+						break;
+					case 'V':
+						highScores[i].setImage(letters[21]);
+						break;
+					case 'W':
+						highScores[i].setImage(letters[22]);
+						break;
+					case 'X':
+						highScores[i].setImage(letters[23]);
+						break;
+					case 'Y':
+						highScores[i].setImage(letters[24]);
+						break;
+					case 'Z':
+						highScores[i].setImage(letters[25]);
+						break;
+					case '0':
+						highScores[i].setImage(numbers[0]);
+						break;
+					case '1':
+						highScores[i].setImage(numbers[1]);
+						break;
+					case '2':
+						highScores[i].setImage(numbers[2]);
+						break;
+					case '3':
+						highScores[i].setImage(numbers[3]);
+						break;
+					case '4':
+						highScores[i].setImage(numbers[4]);
+						break;
+					case '5':
+						highScores[i].setImage(numbers[5]);
+						break;
+					case '6':
+						highScores[i].setImage(numbers[6]);
+						break;
+					case '7':
+						highScores[i].setImage(numbers[7]);
+						break;
+					case '8':
+						highScores[i].setImage(numbers[8]);
+						break;
+					case '9':
+						highScores[i].setImage(numbers[9]);
+						break;	
+				}
+			}
+		}
+		catch (Exception e) {
+		}
+	}
+	
+	private void writeHighScoresToFile() {
+		
+	}
+	
 	private void startGame() {
 		if (credits != 0) {
 			credits--;
+			creditsImage.setImage(numbers[credits]);
 			score = 0;
+			clearMovement();
 			gameState = 1;
+			idle.setVisible(false);
+			idleView.setVisible(false);
 		}
 	}
 	
 	private void insertCoin() {
-		credits++;
+		if (credits < 9 && gameState == 4) {
+			credits++;
+			creditsImage.setImage(numbers[credits]);
+		}
+	}
+	
+	private void clearMovement() {
+		moveUp = false;
+		moveDown = false;
+		moveLeft = false;
+		moveRight = false;
 	}
 	
 	private ImageView spawnCar(){
@@ -357,6 +511,8 @@ public class Game extends Application{
 		if (gameState == 4) {
 			idleView.setVisible(true);
 			idleView.toFront();
+			idle.setVisible(true);
+			idle.toFront();
 		}
 		
 		//Life Counter update
@@ -519,7 +675,7 @@ public class Game extends Application{
 		}
 		
 		//River sound
-		if (person.getTranslateY() < ROAD_ONE_THREE || gameState == 0) {
+		if (person.getTranslateY() < ROAD_ONE_THREE || (gameState != 1 && gameState != 3)) {
 			new Thread(() -> riverPlayer.stop()).start();
 		}
 		else {
@@ -1311,11 +1467,11 @@ public class Game extends Application{
         idleView.setTranslateY(0);
         idleView.setScaleX(3);
         idleView.setScaleY(3);
-        idleView.setVisible(false);
+        idleView.setVisible(true);
         root.getChildren().add(idleView);
         
         //Numbers
-        Image[] numbers = new Image[10];
+        numbers = new Image[10];
         numbers[0] = new Image("lettersAndNumbers/0.png");
         numbers[1] = new Image("lettersAndNumbers/1.png");
         numbers[2] = new Image("lettersAndNumbers/2.png");
@@ -1328,7 +1484,7 @@ public class Game extends Application{
         numbers[9] = new Image("lettersAndNumbers/9.png");
         
         //Letters
-        Image[] letters = new Image[26];
+        letters = new Image[26];
         letters[0] = new Image("lettersAndNumbers/a.png");
         letters[1] = new Image("lettersAndNumbers/b.png");
         letters[2] = new Image("lettersAndNumbers/c.png");
@@ -1355,6 +1511,21 @@ public class Game extends Application{
         letters[23] = new Image("lettersAndNumbers/x.png");
         letters[24] = new Image("lettersAndNumbers/y.png");
         letters[25] = new Image("lettersAndNumbers/z.png");
+        
+        //Effect to blend letters and numbers
+        ColorAdjust lettersNumbers = new ColorAdjust();
+        lettersNumbers.setBrightness(-.08);
+        lettersNumbers.setSaturation(1);
+        
+        //Credits image
+        creditsImage = new ImageView(numbers[0]);
+        creditsImage.setTranslateX(351);
+        creditsImage.setTranslateY(623);
+        creditsImage.setScaleX(2);
+        creditsImage.setScaleY(2);
+        creditsImage.setEffect(lettersNumbers);
+        idle.getChildren().add(creditsImage);
+        root.getChildren().add(idle);
         
         //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         
