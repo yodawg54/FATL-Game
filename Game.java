@@ -197,6 +197,14 @@ public class Game extends Application{
 	final int CAR_LANE_THREE = -180;
 	final int CAR_LANE_FOUR = -270;
 	
+	//High Score Spacing
+	final int FIRST_LETTER_X = 155;
+	final int FIRST_LETTER_Y = 250;
+	final int STANDARD_SPACING = 15;
+	final int TABULATION = 200;
+	final int RETURN_SPACING = 35;
+	final int OFFSET_CORRECT = 10;
+	
 	//http://tutorials.jenkov.com/javafx/button.html
 	//FileInputStream input = new FileInputStream("images/blueCar.png");
 	
@@ -219,12 +227,10 @@ public class Game extends Application{
 	
 	private void readHighScoresFromFile() {
 		try {
-			FileReader read = new FileReader("highScores.txt");
-			highScores = new ImageView[70];
-			char[] input = new char[70];
-			read.read(input, 0, input.length);
+			File inputFile = new File("C:\\Users\\Alan\\Desktop\\FATL\\highScores.txt");
+			FileReader reader = new FileReader(inputFile);
 			for (int i = 0; i < 70; i++) {
-				switch (input[i]) {
+				switch (reader.read()) {
 					case 'A':
 						highScores[i].setImage(letters[0]);
 						break;
@@ -335,8 +341,10 @@ public class Game extends Application{
 						break;	
 				}
 			}
+			reader.close();
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -509,6 +517,7 @@ public class Game extends Application{
 	private void onUpdate(){
 		//Idle screens
 		if (gameState == 4) {
+			readHighScoresFromFile();
 			idleView.setVisible(true);
 			idleView.toFront();
 			idle.setVisible(true);
@@ -547,6 +556,7 @@ public class Game extends Application{
 					gameState = 4;
 					schoolDay = 0;
 					setGradesToOriginalPosition();
+					readHighScoresFromFile();
 				}
 			}
 		}
@@ -675,7 +685,7 @@ public class Game extends Application{
 		}
 		
 		//River sound
-		if (person.getTranslateY() < ROAD_ONE_THREE || (gameState != 1 && gameState != 3)) {
+		if (person.getTranslateY() < ROAD_ONE_THREE || (gameState > 2)) {
 			new Thread(() -> riverPlayer.stop()).start();
 		}
 		else {
@@ -1519,13 +1529,37 @@ public class Game extends Application{
         
         //Credits image
         creditsImage = new ImageView(numbers[0]);
-        creditsImage.setTranslateX(351);
+        creditsImage.setTranslateX(405);
         creditsImage.setTranslateY(623);
         creditsImage.setScaleX(2);
         creditsImage.setScaleY(2);
         creditsImage.setEffect(lettersNumbers);
         idle.getChildren().add(creditsImage);
         root.getChildren().add(idle);
+        
+        //Initializing high scores
+        highScores = new ImageView[70];
+        for (int i = 0; i < 70; i++) {
+        	highScores[i] = new ImageView(letters[0]);
+        	highScores[i].setVisible(true);
+        	highScores[i].setScaleX(3);
+        	highScores[i].setScaleY(3);
+        	highScores[i].setEffect(lettersNumbers);
+        	idle.getChildren().add(highScores[i]);
+        }
+        
+        //High Scores (Alan's patented high score display algorithim)
+        for (int i = 0; i < 10; i++) {
+        	for (int ii = 0; ii < 7; ii++) {
+        		if (ii < 3) {
+        			highScores[(i * 7) + ii].setTranslateX(FIRST_LETTER_X + (STANDARD_SPACING * ii) - (OFFSET_CORRECT * i * 7));
+        		}
+        		else {
+        			highScores[(i * 7) + ii].setTranslateX(FIRST_LETTER_X + TABULATION + (STANDARD_SPACING * ii) - (OFFSET_CORRECT * i * 7));
+        		}
+        		highScores[(i * 7) + ii].setTranslateY(FIRST_LETTER_Y + (RETURN_SPACING * i));
+        	}
+        }
         
         //All Images ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         
