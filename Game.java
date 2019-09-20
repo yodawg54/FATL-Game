@@ -8,6 +8,7 @@ import sun.security.util.Resources;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
@@ -126,6 +127,7 @@ public class Game extends Application{
 	
 	//ImageViews for high scores
 	ImageView[] highScores;
+	ImageView[] runningScore;
 	
 	//Grades
 	Image[] grades;
@@ -224,6 +226,13 @@ public class Game extends Application{
         return root;
 	
 	}*/
+	
+	private void updateScore() {
+		runningScore[3].setImage(numbers[score % 10]);
+		runningScore[2].setImage(numbers[(score % 100 - (score % 10)) / 10]);
+		runningScore[1].setImage(numbers[(score % 1000 - (score % 100)) / 100]);
+		runningScore[0].setImage(numbers[(score - (score % 1000)) / 1000]);
+	}
 	
 	private void readHighScoresFromFile() {
 		try {
@@ -349,7 +358,123 @@ public class Game extends Application{
 	}
 	
 	private void writeHighScoresToFile() {
-		
+		try {
+			File inputFile = new File("C:\\Users\\Alan\\Desktop\\FATL\\highScores.txt");
+			FileWriter writer = new FileWriter(inputFile, false);
+			for (int i = 0; i < 70; i++) {
+				if (highScores[i].getImage().equals(letters[0])) {
+					writer.write('A');
+				}
+				else if (highScores[i].getImage().equals(letters[1])) {
+					writer.write('B');
+				}
+				else if (highScores[i].getImage().equals(letters[2])) {
+					writer.write('C');
+				}
+				else if (highScores[i].getImage().equals(letters[3])) {
+					writer.write('D');
+				}
+				else if (highScores[i].getImage().equals(letters[4])) {
+					writer.write('E');
+				}
+				else if (highScores[i].getImage().equals(letters[5])) {
+					writer.write('F');
+				}
+				else if (highScores[i].getImage().equals(letters[6])) {
+					writer.write('G');
+				}
+				else if (highScores[i].getImage().equals(letters[7])) {
+					writer.write('H');
+				}
+				else if (highScores[i].getImage().equals(letters[8])) {
+					writer.write('I');
+				}
+				else if (highScores[i].getImage().equals(letters[9])) {
+					writer.write('J');
+				}
+				else if (highScores[i].getImage().equals(letters[10])) {
+					writer.write('K');
+				}
+				else if (highScores[i].getImage().equals(letters[11])) {
+					writer.write('L');
+				}
+				else if (highScores[i].getImage().equals(letters[12])) {
+					writer.write('M');
+				}
+				else if (highScores[i].getImage().equals(letters[13])) {
+					writer.write('N');
+				}
+				else if (highScores[i].getImage().equals(letters[14])) {
+					writer.write('O');
+				}
+				else if (highScores[i].getImage().equals(letters[15])) {
+					writer.write('P');
+				}
+				else if (highScores[i].getImage().equals(letters[16])) {
+					writer.write('Q');
+				}
+				else if (highScores[i].getImage().equals(letters[17])) {
+					writer.write('R');
+				}
+				else if (highScores[i].getImage().equals(letters[18])) {
+					writer.write('S');
+				}
+				else if (highScores[i].getImage().equals(letters[19])) {
+					writer.write('T');
+				}
+				else if (highScores[i].getImage().equals(letters[20])) {
+					writer.write('U');
+				}
+				else if (highScores[i].getImage().equals(letters[21])) {
+					writer.write('V');
+				}
+				else if (highScores[i].getImage().equals(letters[22])) {
+					writer.write('W');
+				}
+				else if (highScores[i].getImage().equals(letters[23])) {
+					writer.write('X');
+				}
+				else if (highScores[i].getImage().equals(letters[24])) {
+					writer.write('Y');
+				}
+				else if (highScores[i].getImage().equals(letters[25])) {
+					writer.write('Z');
+				}
+				else if (highScores[i].getImage().equals(numbers[0])) {
+					writer.write('0');
+				}
+				else if (highScores[i].getImage().equals(numbers[1])) {
+					writer.write('1');
+				}
+				else if (highScores[i].getImage().equals(numbers[2])) {
+					writer.write('2');
+				}
+				else if (highScores[i].getImage().equals(numbers[3])) {
+					writer.write('3');
+				}
+				else if (highScores[i].getImage().equals(numbers[4])) {
+					writer.write('4');
+				}
+				else if (highScores[i].getImage().equals(numbers[5])) {
+					writer.write('5');
+				}
+				else if (highScores[i].getImage().equals(numbers[6])) {
+					writer.write('6');
+				}
+				else if (highScores[i].getImage().equals(numbers[7])) {
+					writer.write('7');
+				}
+				else if (highScores[i].getImage().equals(numbers[8])) {
+					writer.write('8');
+				}
+				else {
+					writer.write('9');
+				}
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void startGame() {
@@ -357,6 +482,7 @@ public class Game extends Application{
 			credits--;
 			creditsImage.setImage(numbers[credits]);
 			score = 0;
+			updateScore();
 			clearMovement();
 			gameState = 1;
 			idle.setVisible(false);
@@ -518,9 +644,9 @@ public class Game extends Application{
 		//Idle screens
 		if (gameState == 4) {
 			readHighScoresFromFile();
-			idleView.setVisible(true);
+			idleView.setVisible(false);
 			idleView.toFront();
-			idle.setVisible(true);
+			idle.setVisible(false);
 			idle.toFront();
 		}
 		
@@ -607,6 +733,8 @@ public class Game extends Application{
 				stampPlayer.setStopTime(Duration.seconds(4));
 				stampPlayer.play();
 				int finalScore = (bowmanScore + ninningerScore + floryScore + memorialScore + mckinneyScore) / 5;
+				score += (6 - finalScore) * 10;
+				updateScore();
 				finalGrade.setImage(grades[finalScore - 1]);
 				finalGrade.setVisible(true);
 				wrappingUp = true;
@@ -838,6 +966,8 @@ public class Game extends Application{
 				else {
 					ninningerScore = determineScore();
 					ninninger.setImage(grades[ninningerScore - 1]);
+					score += (6 - ninningerScore) * 10;
+					updateScore();
 					ninninger.setVisible(true);
 					sendPlayerToBeginning(person, false);
 					player.seek(Duration.ZERO); // Resets the media player
@@ -852,6 +982,8 @@ public class Game extends Application{
 				else {
 					memorialScore = determineScore();
 					memorial.setImage(grades[memorialScore - 1]);
+					score += (6 - memorialScore) * 10;
+					updateScore();
 					memorial.setVisible(true);
 					sendPlayerToBeginning(person, false);
 					player.seek(Duration.ZERO); // Resets the media player
@@ -866,6 +998,8 @@ public class Game extends Application{
 				else {
 					mckinneyScore = determineScore();
 					mckinney.setImage(grades[mckinneyScore - 1]);
+					score += (6 - mckinneyScore) * 10;
+					updateScore();
 					mckinney.setVisible(true);
 					sendPlayerToBeginning(person, false);
 					player.seek(Duration.ZERO); // Resets the media player
@@ -880,6 +1014,8 @@ public class Game extends Application{
 				else {
 					floryScore = determineScore();
 					flory.setImage(grades[floryScore - 1]);
+					score += (6 - floryScore) * 10;
+					updateScore();
 					flory.setVisible(true);
 					sendPlayerToBeginning(person, false);
 					player.seek(Duration.ZERO); // Resets the media player
@@ -894,6 +1030,8 @@ public class Game extends Application{
 				else {
 					bowmanScore = determineScore();
 					bowman.setImage(grades[bowmanScore - 1]);
+					score += (6 - bowmanScore) * 10;
+					updateScore();
 					bowman.setVisible(true);
 					sendPlayerToBeginning(person, false);
 					player.seek(Duration.ZERO); // Resets the media player
@@ -1524,8 +1662,9 @@ public class Game extends Application{
         
         //Effect to blend letters and numbers
         ColorAdjust lettersNumbers = new ColorAdjust();
-        lettersNumbers.setBrightness(-.08);
+        lettersNumbers.setBrightness(-.6);
         lettersNumbers.setSaturation(1);
+        lettersNumbers.setContrast(1);
         
         //Credits image
         creditsImage = new ImageView(numbers[0]);
@@ -1536,6 +1675,24 @@ public class Game extends Application{
         creditsImage.setEffect(lettersNumbers);
         idle.getChildren().add(creditsImage);
         root.getChildren().add(idle);
+        
+        //Running scores
+        ColorAdjust runningScoreAdjust = new ColorAdjust();
+        runningScoreAdjust.setBrightness(.1);
+        runningScoreAdjust.setSaturation(1);
+        runningScoreAdjust.setContrast(1);
+        
+        runningScore = new ImageView[4];
+        for (int i = 0; i < 4; i++) {
+        	runningScore[i] = new ImageView(numbers[0]);
+        	runningScore[i].setVisible(true);
+        	runningScore[i].setTranslateX(-79 + (i * 16));
+        	runningScore[i].setTranslateY(-380);
+        	runningScore[i].setScaleX(1.8);
+        	runningScore[i].setScaleY(2);
+        	runningScore[i].setEffect(runningScoreAdjust);
+        	root.getChildren().add(runningScore[i]);
+        }
         
         //Initializing high scores
         highScores = new ImageView[70];
