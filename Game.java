@@ -26,6 +26,8 @@ import javax.sound.midi.Sequencer;
 
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -92,6 +94,7 @@ public class Game extends Application{
 	int credits = 0;
 	int score = 0;
 	int highScoreEntryIndex = 0;
+	int lettersEntered;
 	
 	//time loops since last image spawn
 	final int CAR_SPAWN_LOOPS = 20;
@@ -732,10 +735,9 @@ public class Game extends Application{
 			idleView.toFront();
 			idle.setVisible(true);
 			idle.toFront();
-			int index = getHighScoreIndex();
-			for (int i = 0; true; i++) {
-				
-			}
+			highScoreEntryIndex = getHighScoreIndex();
+			highScores[highScoreEntryIndex + 1].setVisible(false);
+			highScores[highScoreEntryIndex + 2].setVisible(false);
 		}
 		
 		//Life Counter update
