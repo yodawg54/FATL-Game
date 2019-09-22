@@ -91,6 +91,7 @@ public class Game extends Application{
 	//score and credits
 	int credits = 0;
 	int score = 0;
+	int highScoreEntryIndex = 0;
 	
 	//time loops since last image spawn
 	final int CAR_SPAWN_LOOPS = 20;
@@ -477,10 +478,84 @@ public class Game extends Application{
 		}
 	}
 	
+	private int convertScoreImageToInt(int index) {
+		int output = 0;
+		for (int i = 0; i < 4; i++) {
+			if (highScores[i + index].getImage().equals(numbers[0])) {
+			}
+			else if (highScores[i + index].getImage().equals(numbers[1])) {
+				output += (Math.pow(10, i) * 1);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[2])) {
+				output += (Math.pow(10, i) * 2);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[3])) {
+				output += (Math.pow(10, i) * 3);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[4])) {
+				output += (Math.pow(10, i) * 4);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[5])) {
+				output += (Math.pow(10, i) * 5);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[6])) {
+				output += (Math.pow(10, i) * 6);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[7])) {
+				output += (Math.pow(10, i) * 7);
+			}
+			else if (highScores[i + index].getImage().equals(numbers[8])) {
+				output += (Math.pow(10, i) * 8);
+			}
+			else {
+				output += (Math.pow(10, i) * 9);
+			}
+		}
+		return output;
+	}
+	
+	private int getHighScoreIndex() {
+		if (score <= convertScoreImageToInt(66)) {
+			return -1;
+		}
+		else if (score <= convertScoreImageToInt(59)) {
+			return 63;
+		}
+		else if (score <= convertScoreImageToInt(52)) {
+			return 56;
+		}
+		else if (score <= convertScoreImageToInt(45)) {
+			return 49;
+		}
+		else if (score <= convertScoreImageToInt(38)) {
+			return 42;
+		}
+		else if (score <= convertScoreImageToInt(31)) {
+			return 35;
+		}
+		else if (score <= convertScoreImageToInt(24)) {
+			return 28;
+		}
+		else if (score <= convertScoreImageToInt(17)) {
+			return 21;
+		}
+		else if (score <= convertScoreImageToInt(10)) {
+			return 14;
+		}
+		else if (score <= convertScoreImageToInt(3)){
+			return 7;
+		}
+		else {
+			return 0;
+		}
+	}
+	
 	private void startGame() {
 		if (credits != 0) {
 			credits--;
 			creditsImage.setImage(numbers[credits]);
+			lifeOne = true;
+			lifeTwo = true;
 			score = 0;
 			updateScore();
 			clearMovement();
@@ -644,10 +719,23 @@ public class Game extends Application{
 		//Idle screens
 		if (gameState == 4) {
 			readHighScoresFromFile();
-			idleView.setVisible(false);
+			idleView.setVisible(true);
 			idleView.toFront();
-			idle.setVisible(false);
+			idle.setVisible(true);
 			idle.toFront();
+		}
+		
+		//Enter high score
+		if (gameState == 3) {
+			readHighScoresFromFile();
+			idleView.setVisible(true);
+			idleView.toFront();
+			idle.setVisible(true);
+			idle.toFront();
+			int index = getHighScoreIndex();
+			for (int i = 0; true; i++) {
+				
+			}
 		}
 		
 		//Life Counter update
@@ -662,6 +750,7 @@ public class Game extends Application{
 		}
 		else {
 			lifeOneView.setVisible(true);
+			lifeTwoView.setVisible(true);
 		}
 		
 		//Death animation
@@ -679,7 +768,12 @@ public class Game extends Application{
 				person.setImage(gperson);
 				sendPlayerToBeginning(person, false);
 				if (gameOver) {
-					gameState = 4;
+					if (getHighScoreIndex() == -1) {
+						gameState = 4;
+					}
+					else {
+						gameState = 3;
+					}
 					schoolDay = 0;
 					setGradesToOriginalPosition();
 					readHighScoresFromFile();
