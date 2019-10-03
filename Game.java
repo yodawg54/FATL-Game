@@ -5,6 +5,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import sun.security.util.Resources;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -95,6 +96,8 @@ public class Game extends Application{
 	int score = 0;
 	int highScoreEntryIndex = 0;
 	int lettersEntered;
+	int highScoreBlinker = 0;
+	int[] charIndex;
 	
 	//time loops since last image spawn
 	final int CAR_SPAWN_LOOPS = 20;
@@ -132,6 +135,8 @@ public class Game extends Application{
 	//ImageViews for high scores
 	ImageView[] highScores;
 	ImageView[] runningScore;
+	
+	private boolean indexGotten = false;
 	
 	//Grades
 	Image[] grades;
@@ -206,8 +211,8 @@ public class Game extends Application{
 	//High Score Spacing
 	final int FIRST_LETTER_X = 155;
 	final int FIRST_LETTER_Y = 250;
-	final int STANDARD_SPACING = 15;
-	final int TABULATION = 200;
+	final int STANDARD_SPACING = 22;
+	final int TABULATION = 180;
 	final int RETURN_SPACING = 35;
 	final int OFFSET_CORRECT = 10;
 	
@@ -236,6 +241,22 @@ public class Game extends Application{
 		runningScore[2].setImage(numbers[(score % 100 - (score % 10)) / 10]);
 		runningScore[1].setImage(numbers[(score % 1000 - (score % 100)) / 100]);
 		runningScore[0].setImage(numbers[(score - (score % 1000)) / 1000]);
+	}
+	
+	private void enterNewHighScore(int index) {
+		highScores[index + 3].setImage(numbers[score % 10]);
+		highScores[index + 2].setImage(numbers[(score % 100 - (score % 10)) / 10]);
+		highScores[index + 1].setImage(numbers[(score % 1000 - (score % 100)) / 100]);
+		highScores[index].setImage(numbers[(score - (score % 1000)) / 1000]);
+	}
+	
+	private void changeLetter(int letterIndex, int currentLetter, boolean up) {
+		if (up) {
+			highScores[letterIndex].setImage(letters[currentLetter + 1]);
+		}
+		else {
+			highScores[letterIndex].setImage(letters[currentLetter - 1]);
+		}
 	}
 	
 	private void readHighScoresFromFile() {
@@ -475,6 +496,7 @@ public class Game extends Application{
 					writer.write('9');
 				}
 			}
+			writer.close();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -487,34 +509,40 @@ public class Game extends Application{
 			if (highScores[i + index].getImage().equals(numbers[0])) {
 			}
 			else if (highScores[i + index].getImage().equals(numbers[1])) {
-				output += (Math.pow(10, i) * 1);
+				output += (Math.pow(10, 3 - i) * 1);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[2])) {
-				output += (Math.pow(10, i) * 2);
+				output += (Math.pow(10, 3 - i) * 2);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[3])) {
-				output += (Math.pow(10, i) * 3);
+				output += (Math.pow(10, 3 - i) * 3);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[4])) {
-				output += (Math.pow(10, i) * 4);
+				output += (Math.pow(10, 3 - i) * 4);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[5])) {
-				output += (Math.pow(10, i) * 5);
+				output += (Math.pow(10, 3 - i) * 5);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[6])) {
-				output += (Math.pow(10, i) * 6);
+				output += (Math.pow(10, 3 - i) * 6);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[7])) {
-				output += (Math.pow(10, i) * 7);
+				output += (Math.pow(10, 3 - i) * 7);
 			}
 			else if (highScores[i + index].getImage().equals(numbers[8])) {
-				output += (Math.pow(10, i) * 8);
+				output += (Math.pow(10, 3 - i) * 8);
 			}
 			else {
-				output += (Math.pow(10, i) * 9);
+				output += (Math.pow(10, 3 - i) * 9);
 			}
 		}
 		return output;
+	}
+	
+	private void moveScoresDown(int stopIndex) {
+		for (int i = 69; i >= stopIndex + 7; i--) {
+			highScores[i].setImage(highScores[i - 7].getImage());
+		}
 	}
 	
 	private int getHighScoreIndex() {
@@ -525,27 +553,35 @@ public class Game extends Application{
 			return 63;
 		}
 		else if (score <= convertScoreImageToInt(52)) {
+			moveScoresDown(56);
 			return 56;
 		}
 		else if (score <= convertScoreImageToInt(45)) {
+			moveScoresDown(49);
 			return 49;
 		}
 		else if (score <= convertScoreImageToInt(38)) {
+			moveScoresDown(42);
 			return 42;
 		}
 		else if (score <= convertScoreImageToInt(31)) {
+			moveScoresDown(35);
 			return 35;
 		}
 		else if (score <= convertScoreImageToInt(24)) {
+			moveScoresDown(28);
 			return 28;
 		}
 		else if (score <= convertScoreImageToInt(17)) {
+			moveScoresDown(21);
 			return 21;
 		}
 		else if (score <= convertScoreImageToInt(10)) {
+			moveScoresDown(14);
 			return 14;
 		}
 		else if (score <= convertScoreImageToInt(3)){
+			moveScoresDown(7);
 			return 7;
 		}
 		else {
@@ -559,12 +595,18 @@ public class Game extends Application{
 			creditsImage.setImage(numbers[credits]);
 			lifeOne = true;
 			lifeTwo = true;
+			gameOver = false;
 			score = 0;
 			updateScore();
 			clearMovement();
 			gameState = 1;
 			idle.setVisible(false);
 			idleView.setVisible(false);
+			charIndex = new int[3];
+			charIndex[0] = 0;
+			charIndex[1] = 0;
+			charIndex[2] = 0;
+			indexGotten = false;
 		}
 	}
 	
@@ -730,14 +772,26 @@ public class Game extends Application{
 		
 		//Enter high score
 		if (gameState == 3) {
-			readHighScoresFromFile();
 			idleView.setVisible(true);
 			idleView.toFront();
 			idle.setVisible(true);
 			idle.toFront();
-			highScoreEntryIndex = getHighScoreIndex();
-			highScores[highScoreEntryIndex + 1].setVisible(false);
-			highScores[highScoreEntryIndex + 2].setVisible(false);
+			if (!indexGotten) {
+				highScoreEntryIndex = getHighScoreIndex();
+				enterNewHighScore(highScoreEntryIndex + 3);
+				indexGotten = true;
+			}
+		}
+		
+		//Blink high score
+		if (gameState == 3 ) {
+			if (highScoreBlinker % 50 > 25) {
+				highScores[highScoreEntryIndex + lettersEntered].setVisible(false);
+			}
+			else {
+				highScores[highScoreEntryIndex + lettersEntered].setVisible(true);
+			}
+			highScoreBlinker++;
 		}
 		
 		//Life Counter update
@@ -1856,28 +1910,75 @@ public class Game extends Application{
         game.getScene().setOnKeyPressed(event -> {
         	switch (event.getCode()){
         	case ENTER:
-        		startGame();
+        		if (gameState == 4) {
+        			startGame();
+        		}
+        		else if (gameState == 3) {
+        			if (lettersEntered < 2) {
+        				highScores[highScoreEntryIndex + lettersEntered].setVisible(true);
+        				lettersEntered++;
+        			}
+        			else {
+        				highScores[highScoreEntryIndex + lettersEntered].setVisible(true);
+        				writeHighScoresToFile();
+        				gameState = 4;
+        			}
+        		}
         		break;
         	case C:
         		insertCoin();
         		break;
         	case W:
         	case UP:
-    			moveUp = true;
+        		if (gameState == 3) {
+        			if (charIndex[lettersEntered] < 25) {
+        				highScores[highScoreEntryIndex + lettersEntered].setImage(letters[++charIndex[lettersEntered]]);
+        			}
+        			else {
+        				charIndex[lettersEntered] = 0;
+        				highScores[highScoreEntryIndex + lettersEntered].setImage(letters[charIndex[lettersEntered]]);
+        			}
+        		}
+        		else {
+        			moveUp = true;
+        		}
         		break;
         	case S:
         	case DOWN:
-        		moveDown = true;
+        		if (gameState == 3) {
+        			if (charIndex[lettersEntered] > 0) {
+        				highScores[highScoreEntryIndex + lettersEntered].setImage(letters[--charIndex[lettersEntered]]);
+        			}
+        			else {
+        				charIndex[lettersEntered] = 25;
+        				highScores[highScoreEntryIndex + lettersEntered].setImage(letters[charIndex[lettersEntered]]);
+        			}
+        		}
+        		else {
+        			moveDown = true;
+        		}
         		break;
         	case A:
         	case LEFT:
-        		if (person.getTranslateX() > 0) {
+        		if (gameState == 3) {
+        			if (lettersEntered > 0) {
+        				highScores[highScoreEntryIndex + lettersEntered].setVisible(true);
+        				lettersEntered--;
+        			}
+        		}
+        		else if (person.getTranslateX() > 0) {
         			moveLeft = true;
         		}
         		break;
         	case D:
         	case RIGHT:
-        		if (person.getTranslateX() < 540) {
+        		if (gameState == 3) {
+        			if (lettersEntered < 2) {
+        				highScores[highScoreEntryIndex + lettersEntered].setVisible(true);
+        				lettersEntered++;
+        			}
+        		}
+        		else if (person.getTranslateX() < 540) {
         			moveRight = true;
         		}
 			default:
