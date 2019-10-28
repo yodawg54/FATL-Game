@@ -56,7 +56,7 @@ public class Game extends Application{
 	//Color c = Color.rgb(244, 217, 66); //gold color
 	//int x = 0;
 	//int y = 0;
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private StackPane root;
 	private List<Node> cars = new ArrayList<>(); //nodes of cars
 	private List<Node> logs = new ArrayList<>(); //nodes of logs
